@@ -422,6 +422,12 @@ body.dark #zoomControls button:hover {
   background: #333;
 }
 
+body.dark #toolbar button.active {
+  background: #ffd866;
+  border-color: #c9a227;
+  color: #3a2f00;
+}
+
 body.dark .sep {
   background: #444;
 }
