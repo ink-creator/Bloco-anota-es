@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="App de notas flutuantes com quadros, ligações entre notas, busca, zoom e calendário." />
+<title>Notas Flutuantes</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="toolbar">
+    <button id="addNote" title="Criar uma nova nota">+ Nova nota</button>
+    <button id="linkMode" title="Ativar modo de ligar notas">🔗 Ligar</button>
+    <button id="toggleCal" title="Mostrar/ocultar calendário">📅</button>
+    <button id="darkMode" title="Alternar modo escuro">🌙</button>
+
+    <span class="sep"></span>
+
+    <select id="boardSelect" title="Trocar de quadro"></select>
+    <button id="addBoard" title="Novo quadro">+ Quadro</button>
+    <button id="renameBoard" title="Renomear quadro">✎</button>
+    <button id="deleteBoard" title="Apagar quadro">🗑</button>
+
+    <span class="sep"></span>
+
+    <input type="search" id="searchInput" placeholder="Buscar nas notas... (Enter navega)" />
+
+    <span class="sep"></span>
+
+    <div id="zoomControls">
+      <button id="zoomOut" title="Diminuir zoom">−</button>
+      <span id="zoomLevel">100%</span>
+      <button id="zoomIn" title="Aumentar zoom">+</button>
+      <button id="zoomReset" title="Redefinir visualização">⤾</button>
+    </div>
+
+    <span class="sep"></span>
+
+    <button id="exportNotes" title="Baixar backup do quadro atual em JSON">⬇ Exportar</button>
+    <button id="importNotes" title="Carregar backup em JSON">⬆ Importar</button>
+    <input type="file" id="importInput" accept="application/json" hidden />
+    <button id="clearAll" title="Apagar todas as notas do quadro atual">🗑 Limpar</button>
+
+    <span id="stats"></span>
+    <span id="saveIndicator" aria-live="polite">💾 Salvo</span>
+  </div>
+
+  <div id="hint">Duplo clique no fundo cria uma nota · arraste o fundo para navegar · scroll para zoom · clique numa ligação para rotulá-la · Esc cancela</div>
+
+  <div id="viewport">
+    <div id="world">
+      <svg id="links"></svg>
+      <div id="canvas"></div>
+    </div>
+  </div>
+
+  <div id="calendar" class="hidden">
+    <div class="cal-header">
+      <button id="calPrev" aria-label="Mês anterior">‹</button>
+      <span id="calTitle"></span>
+      <button id="calNext" aria-label="Próximo mês">›</button>
+    </div>
+
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="cal-foot">Clique em um dia para inserir na nota ativa</div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
