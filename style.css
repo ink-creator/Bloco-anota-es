@@ -58,6 +58,12 @@ body {
   transform: translateY(1px);
 }
 
+#toolbar button:disabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
 #toolbar button.active {
   background: #ffd866;
   border-color: #c9a227;
@@ -426,6 +432,10 @@ body.dark #toolbar button.active {
   background: #ffd866;
   border-color: #c9a227;
   color: #3a2f00;
+}
+
+body.dark #toolbar button:disabled {
+  opacity: 0.35;
 }
 
 body.dark .sep {

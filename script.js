@@ -140,6 +140,7 @@ function switchBoard(id) {
 
   undoStack = [];
   redoStack = [];
+  updateUndoRedoButtons();
 
   resetView();
   renderBoardSelect();
@@ -976,10 +977,19 @@ let undoStack = [];
 let redoStack = [];
 const UNDO_LIMIT = 50;
 
+const undoBtn = document.getElementById('undoBtn');
+const redoBtn = document.getElementById('redoBtn');
+
+function updateUndoRedoButtons() {
+  undoBtn.disabled = undoStack.length === 0;
+  redoBtn.disabled = redoStack.length === 0;
+}
+
 function pushUndoSnapshot() {
   undoStack.push(JSON.stringify(state));
   if (undoStack.length > UNDO_LIMIT) undoStack.shift();
   redoStack = [];
+  updateUndoRedoButtons();
 }
 
 function undo() {
@@ -994,6 +1004,7 @@ function undo() {
 
   save();
   render();
+  updateUndoRedoButtons();
 }
 
 function redo() {
@@ -1007,7 +1018,11 @@ function redo() {
 
   save();
   render();
+  updateUndoRedoButtons();
 }
+
+undoBtn.addEventListener('click', undo);
+redoBtn.addEventListener('click', redo);
 
 /* ===== ATALHOS DE TECLADO ===== */
 
@@ -1213,3 +1228,4 @@ darkBtn.addEventListener('click', () => {
 renderBoardSelect();
 applyTransform();
 render();
+updateUndoRedoButtons();
