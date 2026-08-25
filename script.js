@@ -138,6 +138,9 @@ function switchBoard(id) {
   linkMode = false;
   linkBtn.classList.remove('active');
 
+  undoStack = [];
+  redoStack = [];
+
   resetView();
   renderBoardSelect();
   render();
@@ -294,8 +297,8 @@ document.getElementById('zoomReset').addEventListener('click', resetView);
 
 /* Arrastar o fundo para navegar (pan) */
 
-canvas.addEventListener('mousedown', e => {
-  if (e.target !== canvas) return;
+viewport.addEventListener('mousedown', e => {
+  if (e.target !== canvas && e.target !== viewport) return;
 
   const startX = e.clientX;
   const startY = e.clientY;
@@ -322,8 +325,8 @@ canvas.addEventListener('mousedown', e => {
 
 /* Duplo clique no fundo cria uma nota ali */
 
-canvas.addEventListener('dblclick', e => {
-  if (e.target !== canvas) return;
+viewport.addEventListener('dblclick', e => {
+  if (e.target !== canvas && e.target !== viewport) return;
 
   const p = screenToWorld(e.clientX, e.clientY);
   createNote(p.x - 110, p.y - 20);
@@ -440,20 +443,34 @@ function renderNote(note) {
 
   /* ===== FOCO ===== */
 
+  let editSnapshotTaken = false;
+
   ta.addEventListener('focus', () => {
     setActiveNote(note.id);
     bringToFront(el);
+    editSnapshotTaken = false;
   });
 
   ta.addEventListener('input', () => {
+    if (!editSnapshotTaken) {
+      pushUndoSnapshot();
+      editSnapshotTaken = true;
+    }
+
     note.text = ta.value;
     save();
+  });
+
+  ta.addEventListener('blur', () => {
+    editSnapshotTaken = false;
   });
 
   /* ===== APAGAR ===== */
 
   del.addEventListener('click', e => {
     e.stopPropagation();
+
+    pushUndoSnapshot();
 
     state.notes = state.notes.filter(n => n.id !== note.id);
     state.links = state.links.filter(l => l.a !== note.id && l.b !== note.id);
@@ -468,6 +485,8 @@ function renderNote(note) {
 
   pinBtn.addEventListener('click', e => {
     e.stopPropagation();
+
+    pushUndoSnapshot();
 
     note.pinned = !note.pinned;
 
@@ -502,6 +521,8 @@ function renderNote(note) {
       sw.addEventListener('click', ev => {
         ev.stopPropagation();
 
+        pushUndoSnapshot();
+
         note.colorIndex = i;
         applyNoteColor(el, handle, i);
         popup.remove();
@@ -534,15 +555,44 @@ function renderNote(note) {
     });
 
     ro.observe(el);
-
-    el.addEventListener('mouseup', () => save());
   }
+
+  // A alça nativa de redimensionar fica no canto inferior direito, numa
+  // área que não pertence à textarea nem à handle (mousedown cai direto
+  // no elemento da nota). O ResizeObserver acima é assíncrono e atrasa a
+  // ligação em relação ao arraste — por isso ela "não tocava" na nota ao
+  // crescer. Isto força o recálculo a cada movimento, igual ao arraste.
+  el.addEventListener('mousedown', e => {
+    if (e.target !== el) return;
+
+    pushUndoSnapshot();
+    bringToFront(el);
+    setActiveNote(note.id);
+
+    function move() {
+      drawLinks();
+    }
+
+    function up() {
+      document.removeEventListener('mousemove', move);
+      document.removeEventListener('mouseup', up);
+
+      note.width = Math.round(el.offsetWidth);
+      note.height = Math.round(el.offsetHeight);
+      save();
+    }
+
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', up);
+  });
 
   /* ===== ARRASTAR ===== */
 
   handle.addEventListener('mousedown', e => {
     if (e.target.tagName === 'BUTTON') return;
     if (note.pinned) return;
+
+    pushUndoSnapshot();
 
     bringToFront(el);
     setActiveNote(note.id);
@@ -592,6 +642,8 @@ function renderNote(note) {
         l => (l.a === linkPick && l.b === note.id) || (l.a === note.id && l.b === linkPick)
       );
 
+      pushUndoSnapshot();
+
       if (!exists) {
         state.links.push({ a: linkPick, b: note.id, label: '' });
       } else {
@@ -630,7 +682,12 @@ function promptLinkLabel(link) {
   const value = prompt('Rótulo da ligação:', link.label || '');
   if (value === null) return;
 
-  link.label = value.trim();
+  const trimmed = value.trim();
+  if (trimmed === (link.label || '')) return;
+
+  pushUndoSnapshot();
+
+  link.label = trimmed;
   save();
   drawLinks();
 }
@@ -697,6 +754,8 @@ function escapeHtml(s) {
 /* ===== NOVA NOTA ===== */
 
 function createNote(x, y) {
+  pushUndoSnapshot();
+
   let pos;
 
   if (x != null && y != null) {
@@ -726,6 +785,54 @@ function createNote(x, y) {
 
 document.getElementById('addNote').addEventListener('click', () => createNote());
 
+/* ===== COPIAR / COLAR ===== */
+
+let clipboardNote = null;
+
+function copyActiveNote() {
+  const note = state.notes.find(n => n.id === activeNoteId);
+  if (!note) return;
+
+  clipboardNote = {
+    text: note.text,
+    colorIndex: note.colorIndex,
+    width: note.width,
+    height: note.height,
+    x: note.x,
+    y: note.y
+  };
+}
+
+function pasteNote() {
+  if (!clipboardNote) return;
+
+  pushUndoSnapshot();
+
+  const x = clipboardNote.x + 24;
+  const y = clipboardNote.y + 24;
+
+  const note = {
+    id: state.nextId++,
+    x, y,
+    text: clipboardNote.text,
+    colorIndex: clipboardNote.colorIndex,
+    pinned: false
+  };
+
+  if (clipboardNote.width) note.width = clipboardNote.width;
+  if (clipboardNote.height) note.height = clipboardNote.height;
+
+  state.notes.push(note);
+  setActiveNote(note.id);
+
+  // encadeia o deslocamento: colar de novo empilha a partir da última cópia
+  clipboardNote.x = x;
+  clipboardNote.y = y;
+
+  save();
+  render();
+}
+
 /* ===== MODO LIGAÇÃO ===== */
 
 const linkBtn = document.getElementById('linkMode');
@@ -743,6 +850,8 @@ linkBtn.addEventListener('click', () => {
 
 document.getElementById('clearAll').addEventListener('click', () => {
   if (!confirm('Apagar todas as notas deste quadro?')) return;
+
+  pushUndoSnapshot();
 
   state = { notes: [], links: [], nextId: 1 };
   activeNoteId = null;
@@ -837,6 +946,8 @@ importInput.addEventListener('change', () => {
 
       if (!proceed) return;
 
+      pushUndoSnapshot();
+
       state = {
         notes: parsed.notes,
         links: Array.isArray(parsed.links) ? parsed.links : [],
@@ -859,25 +970,88 @@ importInput.addEventListener('change', () => {
   reader.readAsText(file);
 });
 
+/* ===== DESFAZER / REFAZER ===== */
+
+let undoStack = [];
+let redoStack = [];
+const UNDO_LIMIT = 50;
+
+function pushUndoSnapshot() {
+  undoStack.push(JSON.stringify(state));
+  if (undoStack.length > UNDO_LIMIT) undoStack.shift();
+  redoStack = [];
+}
+
+function undo() {
+  if (!undoStack.length) return;
+
+  redoStack.push(JSON.stringify(state));
+  state = JSON.parse(undoStack.pop());
+
+  // evita referência a nota que deixou de existir após o desfazer
+  activeNoteId = null;
+  linkPick = null;
+
+  save();
+  render();
+}
+
+function redo() {
+  if (!redoStack.length) return;
+
+  undoStack.push(JSON.stringify(state));
+  state = JSON.parse(redoStack.pop());
+
+  activeNoteId = null;
+  linkPick = null;
+
+  save();
+  render();
+}
+
 /* ===== ATALHOS DE TECLADO ===== */
 
 document.addEventListener('keydown', e => {
-  if (e.key !== 'Escape') return;
+  if (e.key === 'Escape') {
+    if (document.activeElement === searchInput) searchInput.blur();
 
-  if (document.activeElement === searchInput) searchInput.blur();
+    if (linkPick != null) {
+      linkPick = null;
+      document.querySelectorAll('.note.selected').forEach(n => n.classList.remove('selected'));
+    }
 
-  if (linkPick != null) {
-    linkPick = null;
-    document.querySelectorAll('.note.selected').forEach(n => n.classList.remove('selected'));
+    if (linkMode) {
+      linkMode = false;
+      linkBtn.classList.remove('active');
+    }
+
+    closeAllColorPopups();
+    closeCalendar();
+    return;
   }
 
-  if (linkMode) {
-    linkMode = false;
-    linkBtn.classList.remove('active');
-  }
+  const mod = e.ctrlKey || e.metaKey;
+  if (!mod) return;
 
-  closeAllColorPopups();
-  closeCalendar();
+  const tag = document.activeElement && document.activeElement.tagName;
+  const inField = tag === 'TEXTAREA' || tag === 'INPUT' || tag === 'SELECT';
+  if (inField) return; // deixa o navegador cuidar de copiar/colar/desfazer texto normalmente
+
+  const key = e.key.toLowerCase();
+
+  if (key === 'z') {
+    e.preventDefault();
+    e.shiftKey ? redo() : undo();
+  } else if (key === 'y') {
+    e.preventDefault();
+    redo();
+  } else if (key === 'c') {
+    e.preventDefault();
+    copyActiveNote();
+  } else if (key === 'v') {
+    e.preventDefault();
+    pasteNote();
+  }
 });
 
 /* Fecha popups de cor ao clicar fora */
