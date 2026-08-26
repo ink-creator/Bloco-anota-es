@@ -47,7 +47,7 @@
     <span id="saveIndicator" aria-live="polite">💾 Salvo</span>
   </div>
 
-  <div id="hint">Duplo clique no fundo cria uma nota · arraste o fundo para navegar · scroll para zoom · clique numa ligação para rotulá-la · Ctrl+C/V copia/cola nota · Ctrl+Z desfaz, Ctrl+Shift+Z refaz · Esc cancela</div>
+  <div id="hint">Duplo clique no fundo cria uma nota · arraste o fundo para navegar · scroll para zoom · clique num link para visualizar · Shift+clique num link abre no navegador · Ctrl+C/V copia/cola nota · Ctrl+Z desfaz · Esc cancela</div>
 
   <div id="viewport">
     <div id="world">
@@ -65,6 +65,17 @@
 
     <div class="cal-grid" id="calGrid"></div>
     <div class="cal-foot">Clique em um dia para inserir na nota ativa</div>
+  </div>
+
+  <!-- Visualizador de arquivo -->
+  <div id="file-viewer-overlay" class="hidden" role="dialog" aria-modal="true">
+    <div id="file-viewer-box">
+      <div id="file-viewer-header">
+        <span id="file-viewer-title">Arquivo</span>
+        <button id="file-viewer-close" title="Fechar (Esc)">✕ Fechar</button>
+      </div>
+      <div id="file-viewer-body"></div>
+    </div>
   </div>
 
   <script src="script.js"></script>

@@ -333,6 +333,251 @@ viewport.addEventListener('dblclick', e => {
   createNote(p.x - 110, p.y - 20);
 });
 
+/* ===== ARRASTAR ARQUIVOS E LINKS PARA O QUADRO ===== */
+
+const MAX_TEXT_FILE_SIZE = 300 * 1024;  // 300KB
+const MAX_IMAGE_SIZE = 3 * 1024 * 1024; // 3MB (localStorage tem espaço limitado)
+
+function isUrl(str) {
+  return /^https?:\/\/\S+$/i.test((str || '').trim());
+}
+
+// Detecta todas as URLs http/https num texto e retorna array de {url, start, end}
+function extractUrls(text) {
+  const results = [];
+  const re = /https?:\/\/[^\s<>"')\]]+/gi;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    results.push({ url: m[0], start: m.index, end: m.index + m[0].length });
+  }
+  return results;
+}
+
+/* ===== VISUALIZADOR DE ARQUIVO ===== */
+
+const fileViewerOverlay = document.getElementById('file-viewer-overlay');
+const fileViewerBody   = document.getElementById('file-viewer-body');
+const fileViewerTitle  = document.getElementById('file-viewer-title');
+
+document.getElementById('file-viewer-close').addEventListener('click', closeFileViewer);
+
+fileViewerOverlay.addEventListener('mousedown', e => {
+  if (e.target === fileViewerOverlay) closeFileViewer();
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !fileViewerOverlay.classList.contains('hidden')) {
+    closeFileViewer();
+    e.stopPropagation();
+  }
+}, true);
+
+function closeFileViewer() {
+  fileViewerOverlay.classList.add('hidden');
+  // Limpa o corpo para libertar memória (revogar blob URLs, parar vídeos, etc.)
+  fileViewerBody.innerHTML = '';
+}
+
+function getFileIcon(mime, name) {
+  if (!mime) mime = '';
+  if (!name) name = '';
+  if (mime.startsWith('image/')) return '🖼️';
+  if (mime === 'application/pdf') return '📄';
+  if (mime.startsWith('text/') || /\.(txt|md|log|csv|json)$/i.test(name)) return '📝';
+  if (/\.(zip|rar|7z|tar|gz)$/i.test(name)) return '📦';
+  return '📎';
+}
+
+function openFileViewer(dataUrl, fileName, mimeType) {
+  fileViewerTitle.textContent = fileName || 'Arquivo';
+  fileViewerBody.innerHTML = '';
+  fileViewerOverlay.classList.remove('hidden');
+
+  if (!dataUrl) {
+    fileViewerBody.innerHTML = `<div class="viewer-placeholder"><span class="ph-icon">📎</span><p>Pré-visualização não disponível.</p></div>`;
+    return;
+  }
+
+  if (mimeType && mimeType.startsWith('image/')) {
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    img.alt = fileName;
+    fileViewerBody.appendChild(img);
+
+  } else if (mimeType === 'application/pdf') {
+    const iframe = document.createElement('iframe');
+    iframe.src = dataUrl;
+    iframe.title = fileName;
+    fileViewerBody.appendChild(iframe);
+
+  } else if (mimeType && (mimeType.startsWith('text/') || mimeType === 'application/json')) {
+    // dataUrl é base64 — decodifica para texto
+    try {
+      const base64 = dataUrl.split(',')[1];
+      const text = base64 ? decodeURIComponent(escape(atob(base64))) : dataUrl;
+      const pre = document.createElement('pre');
+      pre.textContent = text;
+      fileViewerBody.appendChild(pre);
+    } catch {
+      const pre = document.createElement('pre');
+      pre.textContent = dataUrl;
+      fileViewerBody.appendChild(pre);
+    }
+
+  } else {
+    // Tipo desconhecido — oferece download
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = fileName || 'arquivo';
+    a.textContent = 'Baixar arquivo';
+
+    fileViewerBody.innerHTML = `<div class="viewer-placeholder">
+      <span class="ph-icon">${getFileIcon(mimeType, fileName)}</span>
+      <p>Pré-visualização não disponível para este tipo de arquivo.</p>
+    </div>`;
+    fileViewerBody.querySelector('.viewer-placeholder').appendChild(a);
+  }
+}
+
+// Abre uma URL externa num iframe dentro do visualizador
+function openUrlViewer(url) {
+  fileViewerTitle.textContent = url;
+  fileViewerBody.innerHTML = '';
+  fileViewerOverlay.classList.remove('hidden');
+
+  // Tenta carregar num iframe; se o site bloquear, avisa e oferece abrir numa aba
+  const iframe = document.createElement('iframe');
+  iframe.src = url;
+  iframe.title = url;
+  iframe.sandbox = 'allow-scripts allow-same-origin allow-forms allow-popups';
+
+  iframe.addEventListener('error', () => {
+    showUrlFallback(url);
+  });
+
+  fileViewerBody.appendChild(iframe);
+
+  // Fallback em 5s (sites bloqueados via X-Frame-Options não disparam "error")
+  const fallbackTimer = setTimeout(() => {
+    // Se o iframe ainda não tem conteúdo acessível, não fazemos nada —
+    // o usuário já vê o iframe tentando carregar.
+  }, 5000);
+
+  iframe.addEventListener('load', () => clearTimeout(fallbackTimer));
+}
+
+function showUrlFallback(url) {
+  fileViewerBody.innerHTML = `<div class="viewer-placeholder">
+    <span class="ph-icon">🔗</span>
+    <p>Este site não permite ser exibido aqui.</p>
+    <a id="open-external-link">Abrir em nova aba ↗</a>
+  </div>`;
+  document.getElementById('open-external-link').addEventListener('click', () => {
+    window.open(url, '_blank', 'noopener');
+  });
+}
+
+let dragCounter = 0;
+let internalDrag = false;
+
+// Evita criar nota nova quando o usuário só está arrastando texto
+// selecionado de dentro de uma nota (ex.: reordenando texto no textarea).
+document.addEventListener('dragstart', () => { internalDrag = true; });
+document.addEventListener('dragend', () => { internalDrag = false; });
+
+viewport.addEventListener('dragenter', e => {
+  if (internalDrag) return;
+  e.preventDefault();
+  dragCounter++;
+  viewport.classList.add('drag-active');
+});
+
+viewport.addEventListener('dragleave', () => {
+  dragCounter = Math.max(0, dragCounter - 1);
+  if (dragCounter === 0) viewport.classList.remove('drag-active');
+});
+
+viewport.addEventListener('dragover', e => {
+  if (internalDrag) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'copy';
+});
+
+viewport.addEventListener('drop', e => {
+  if (internalDrag) return;
+
+  e.preventDefault();
+  dragCounter = 0;
+  viewport.classList.remove('drag-active');
+
+  const p = screenToWorld(e.clientX, e.clientY);
+  const files = Array.from(e.dataTransfer.files || []);
+
+  if (files.length) {
+    files.forEach((file, i) => {
+      const x = p.x - 110 + i * 24;
+      const y = p.y - 70 + i * 24;
+
+      if (file.type.startsWith('image/')) {
+        if (file.size > MAX_IMAGE_SIZE) {
+          createNote(x, y, { text: `📎 ${file.name} (imagem grande demais pra importar)` });
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => createNote(x, y, {
+          image: reader.result,
+          text: file.name,
+          fileData: reader.result,
+          fileName: file.name,
+          fileMime: file.type
+        });
+        reader.readAsDataURL(file);
+
+      } else if (file.type.startsWith('text/') || /\.(txt|md|csv|json|log)$/i.test(file.name)) {
+        if (file.size > MAX_TEXT_FILE_SIZE) {
+          createNote(x, y, { text: `📎 ${file.name} (arquivo grande demais pra importar o conteúdo)` });
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+          // Guarda como base64 para o visualizador; exibe preview do texto na nota
+          const asB64 = btoa(unescape(encodeURIComponent(reader.result)));
+          const dataUrl = `data:${file.type || 'text/plain'};base64,` + asB64;
+          const preview = reader.result.slice(0, 300) + (reader.result.length > 300 ? '…' : '');
+          createNote(x, y, {
+            text: preview,
+            fileData: dataUrl,
+            fileName: file.name,
+            fileMime: file.type || 'text/plain'
+          });
+        };
+        reader.readAsText(file, 'UTF-8');
+
+      } else if (file.type === 'application/pdf') {
+        if (file.size > 10 * 1024 * 1024) {
+          createNote(x, y, { text: `📄 ${file.name} (PDF grande demais pra importar)` });
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => createNote(x, y, {
+          text: `📄 ${file.name}`,
+          fileData: reader.result,
+          fileName: file.name,
+          fileMime: 'application/pdf'
+        });
+        reader.readAsDataURL(file);
+
+      } else {
+        createNote(x, y, { text: `📎 ${file.name}` });
+      }
+    });
+    return;
+  }
+
+  const dropped = (e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain') || '').trim();
+  if (dropped) createNote(p.x - 110, p.y - 20, { text: dropped });
+});
+
 function focusOnNote(note) {
   const rect = viewport.getBoundingClientRect();
   const el = canvas.querySelector(`.note[data-id="${note.id}"]`);
@@ -420,15 +665,28 @@ function renderNote(note) {
   el.dataset.id = note.id;
   el.classList.toggle('pinned', !!note.pinned);
 
+  // Barra de preview de arquivo (se a nota tiver fileData)
+  const filePreviewHtml = note.fileData
+    ? `<div class="note-file-preview" data-action="open-file">
+         <span class="file-icon">${getFileIcon(note.fileMime, note.fileName)}</span>
+         <span class="file-name" title="${escapeHtml(note.fileName || 'arquivo')}">${escapeHtml(note.fileName || 'arquivo')}</span>
+         <span class="file-open-btn">👁 Ver</span>
+       </div>`
+    : '';
+
   el.innerHTML = `
     <div class="handle">
       <button class="pin-btn" title="Fixar nota">${note.pinned ? '📌' : '📍'}</button>
       <button class="color-btn" title="Cor da nota">🎨</button>
       <button class="cal-btn" title="Inserir data">📅</button>
+      <button class="link-open-btn" title="Abrir link (Shift+clique abre no navegador)" style="display:${isUrl(note.text) ? 'inline-flex' : 'none'}">🔗</button>
       <button class="del" title="Apagar">✕</button>
     </div>
 
+    ${filePreviewHtml}
+    ${note.image ? `<img class="note-image" src="${note.image}" alt="">` : ''}
     <textarea placeholder="Escreva algo...">${escapeHtml(note.text)}</textarea>
+    <div class="note-link-overlay" aria-hidden="true"></div>
   `;
 
   canvas.appendChild(el);
@@ -439,6 +697,75 @@ function renderNote(note) {
   const calBtn = el.querySelector('.cal-btn');
   const pinBtn = el.querySelector('.pin-btn');
   const colorBtn = el.querySelector('.color-btn');
+  const linkOpenBtn = el.querySelector('.link-open-btn');
+  const linkOverlay = el.querySelector('.note-link-overlay');
+
+  linkOpenBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    if (e.shiftKey) {
+      window.open(ta.value.trim(), '_blank', 'noopener');
+    } else {
+      openUrlViewer(ta.value.trim());
+    }
+  });
+
+  // Botão "Ver arquivo" na barra de preview
+  const filePreviewBar = el.querySelector('.note-file-preview');
+  if (filePreviewBar) {
+    filePreviewBar.addEventListener('click', e => {
+      e.stopPropagation();
+      openFileViewer(note.fileData, note.fileName, note.fileMime);
+    });
+  }
+
+  // ---- OVERLAY DE LINKS ----
+  function rebuildLinkOverlay() {
+    if (!linkOverlay) return;
+    const text = ta.value;
+    const urls = extractUrls(text);
+
+    if (!urls.length) {
+      linkOverlay.innerHTML = '';
+      linkOverlay.style.display = 'none';
+      return;
+    }
+
+    linkOverlay.style.display = '';
+
+    // Reconstrói o conteúdo do overlay como texto com âncoras nos trechos de URL.
+    // O overlay fica posicionado exatamente sobre o textarea, com a mesma fonte
+    // e espaçamento, mas texto transparente — só os <a> ficam visíveis.
+    let html = '';
+    let cursor = 0;
+    for (const { url, start, end } of urls) {
+      if (start > cursor) html += escapeHtml(text.slice(cursor, start));
+      html += `<a href="${escapeHtml(url)}" title="${escapeHtml(url)}" data-url="${escapeHtml(url)}">` + escapeHtml(url) + '</a>';
+      cursor = end;
+    }
+    if (cursor < text.length) html += escapeHtml(text.slice(cursor));
+    linkOverlay.innerHTML = html;
+
+    // Clique numa âncora: abre o visualizador em vez de navegar
+    // Shift+clique: abre diretamente no navegador
+    linkOverlay.querySelectorAll('a').forEach(a => {
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.shiftKey) {
+          window.open(a.dataset.url, '_blank', 'noopener');
+        } else {
+          openUrlViewer(a.dataset.url);
+        }
+      });
+    });
+  }
+
+  rebuildLinkOverlay();
+
+  // Sincroniza scroll do overlay com o textarea
+  ta.addEventListener('scroll', () => {
+    if (linkOverlay) linkOverlay.scrollTop = ta.scrollTop;
+  });
 
   applyNoteColor(el, handle, note.colorIndex || 0);
 
@@ -460,6 +787,9 @@ function renderNote(note) {
 
     note.text = ta.value;
     save();
+
+    linkOpenBtn.style.display = isUrl(ta.value) ? 'inline-flex' : 'none';
+    rebuildLinkOverlay();
   });
 
   ta.addEventListener('blur', () => {
@@ -669,14 +999,33 @@ function closeAllColorPopups() {
 
 /* ===== LINHAS ===== */
 
-function center(note) {
+function noteRect(note) {
   const el = canvas.querySelector(`.note[data-id="${note.id}"]`);
 
   if (el) {
-    return { x: note.x + el.offsetWidth / 2, y: note.y + el.offsetHeight / 2 };
+    return { x: note.x, y: note.y, w: el.offsetWidth, h: el.offsetHeight };
   }
 
-  return { x: note.x + 110, y: note.y + 70 };
+  return { x: note.x, y: note.y, w: note.width || 220, h: note.height || 160 };
+}
+
+// Ponto onde a linha (do centro do retângulo até "target") cruza a borda do retângulo.
+// Antes a ligação ia de centro a centro e ficava escondida atrás da nota; em notas
+// de tamanhos bem diferentes isso podia parecer uma linha cortada antes de chegar.
+function rectEdgePoint(rect, target) {
+  const cx = rect.x + rect.w / 2;
+  const cy = rect.y + rect.h / 2;
+
+  const dx = target.x - cx;
+  const dy = target.y - cy;
+
+  if (!dx && !dy) return { x: cx, y: cy };
+
+  const scaleX = dx ? (rect.w / 2) / Math.abs(dx) : Infinity;
+  const scaleY = dy ? (rect.h / 2) / Math.abs(dy) : Infinity;
+  const scale = Math.min(scaleX, scaleY);
+
+  return { x: cx + dx * scale, y: cy + dy * scale };
 }
 
 function promptLinkLabel(link) {
@@ -702,15 +1051,20 @@ function drawLinks() {
 
     if (!a || !b) return;
 
-    const ca = center(a);
-    const cb = center(b);
+    const rectA = noteRect(a);
+    const rectB = noteRect(b);
+    const centerA = { x: rectA.x + rectA.w / 2, y: rectA.y + rectA.h / 2 };
+    const centerB = { x: rectB.x + rectB.w / 2, y: rectB.y + rectB.h / 2 };
+
+    const pA = rectEdgePoint(rectA, centerB);
+    const pB = rectEdgePoint(rectB, centerA);
 
     const line = document.createElementNS(SVG_NS, 'line');
 
-    line.setAttribute('x1', ca.x);
-    line.setAttribute('y1', ca.y);
-    line.setAttribute('x2', cb.x);
-    line.setAttribute('y2', cb.y);
+    line.setAttribute('x1', pA.x);
+    line.setAttribute('y1', pA.y);
+    line.setAttribute('x2', pB.x);
+    line.setAttribute('y2', pB.y);
     line.style.pointerEvents = 'stroke';
     line.style.cursor = 'pointer';
 
@@ -722,8 +1076,8 @@ function drawLinks() {
     svg.appendChild(line);
 
     if (link.label) {
-      const mx = (ca.x + cb.x) / 2;
-      const my = (ca.y + cb.y) / 2;
+      const mx = (pA.x + pB.x) / 2;
+      const my = (pA.y + pB.y) / 2;
 
       const text = document.createElementNS(SVG_NS, 'text');
       text.setAttribute('x', mx);
@@ -754,7 +1108,7 @@ function escapeHtml(s) {
 
 /* ===== NOVA NOTA ===== */
 
-function createNote(x, y) {
+function createNote(x, y, extra) {
   pushUndoSnapshot();
 
   let pos;
@@ -766,14 +1120,14 @@ function createNote(x, y) {
     pos = { x: c.x - 110 + (Math.random() * 60 - 30), y: c.y - 70 + (Math.random() * 60 - 30) };
   }
 
-  const note = {
+  const note = Object.assign({
     id: state.nextId++,
     x: pos.x,
     y: pos.y,
     text: '',
     colorIndex: 0,
     pinned: false
-  };
+  }, extra);
 
   state.notes.push(note);
   setActiveNote(note.id);
