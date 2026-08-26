@@ -67,6 +67,18 @@
     <div class="cal-foot">Clique em um dia para inserir na nota ativa</div>
   </div>
 
+  <!-- Popup de criação de link local (aparece sobre a nota) -->
+  <div id="local-link-popup" class="hidden">
+    <div id="llp-inner">
+      <span id="llp-label">🔗 Criar link</span>
+      <input id="llp-url-input" type="text" placeholder="Cole uma URL ou caminho local..." autocomplete="off" spellcheck="false" />
+      <div id="llp-buttons">
+        <button id="llp-confirm">Inserir link</button>
+        <button id="llp-cancel">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Visualizador de arquivo -->
   <div id="file-viewer-overlay" class="hidden" role="dialog" aria-modal="true">
     <div id="file-viewer-box">

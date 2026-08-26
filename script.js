@@ -147,19 +147,6 @@ function switchBoard(id) {
   render();
 }
 
-function renderBoardSelect() {
-  const sel = document.getElementById('boardSelect');
-  sel.innerHTML = '';
-
-  boards.forEach(b => {
-    const opt = document.createElement('option');
-    opt.value = b.id;
-    opt.textContent = b.name;
-    if (b.id === currentBoardId) opt.selected = true;
-    sel.appendChild(opt);
-  });
-}
-
 document.getElementById('boardSelect').addEventListener('change', e => {
   switchBoard(e.target.value);
 });
@@ -305,10 +292,12 @@ viewport.addEventListener('mousedown', e => {
   const startY = e.clientY;
   const origPanX = panX;
   const origPanY = panY;
+  let moved = false;
 
   viewport.classList.add('panning');
 
   function move(ev) {
+    moved = true;
     panX = origPanX + (ev.clientX - startX);
     panY = origPanY + (ev.clientY - startY);
     applyTransform();
@@ -317,11 +306,17 @@ viewport.addEventListener('mousedown', e => {
   function up() {
     document.removeEventListener('mousemove', move);
     document.removeEventListener('mouseup', up);
+    document.removeEventListener('selectstart', preventSelect);
     viewport.classList.remove('panning');
+  }
+
+  function preventSelect(ev) {
+    if (moved) ev.preventDefault();
   }
 
   document.addEventListener('mousemove', move);
   document.addEventListener('mouseup', up);
+  document.addEventListener('selectstart', preventSelect);
 });
 
 /* Duplo clique no fundo cria uma nota ali */
@@ -351,6 +346,43 @@ function extractUrls(text) {
     results.push({ url: m[0], start: m.index, end: m.index + m[0].length });
   }
   return results;
+}
+
+// Detecta links no formato [texto](url) — inclui URLs locais (file://, caminhos)
+// Retorna array de {text, url, start, end, isLocal}
+function extractMarkdownLinks(text) {
+  const results = [];
+  const re = /\[([^\]]+)\]\(([^)]+)\)/g;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    const url = m[2].trim();
+    const isLocal = !url.match(/^https?:\/\//i);
+    results.push({
+      text: m[1],
+      url,
+      start: m.index,
+      end: m.index + m[0].length,
+      isLocal
+    });
+  }
+  return results;
+}
+
+// Combina URLs soltas e links Markdown; retorna lista unificada ordenada por posição
+function extractAllLinks(text) {
+  const mdLinks = extractMarkdownLinks(text);
+  // Índices ocupados por links Markdown (para não detectar URLs internas como soltas)
+  const occupied = new Set();
+  mdLinks.forEach(l => { for (let i = l.start; i < l.end; i++) occupied.add(i); });
+
+  const bareUrls = extractUrls(text).filter(u => !occupied.has(u.start));
+
+  const all = [
+    ...mdLinks,
+    ...bareUrls.map(u => ({ text: u.url, url: u.url, start: u.start, end: u.end, isLocal: false }))
+  ];
+  all.sort((a, b) => a.start - b.start);
+  return all;
 }
 
 /* ===== VISUALIZADOR DE ARQUIVO ===== */
@@ -388,7 +420,7 @@ function getFileIcon(mime, name) {
   return '📎';
 }
 
-function openFileViewer(dataUrl, fileName, mimeType) {
+function openFileViewer(dataUrl, fileName, mimeType, noteRef) {
   fileViewerTitle.textContent = fileName || 'Arquivo';
   fileViewerBody.innerHTML = '';
   fileViewerOverlay.classList.remove('hidden');
@@ -411,18 +443,84 @@ function openFileViewer(dataUrl, fileName, mimeType) {
     fileViewerBody.appendChild(iframe);
 
   } else if (mimeType && (mimeType.startsWith('text/') || mimeType === 'application/json')) {
-    // dataUrl é base64 — decodifica para texto
+    // Decodifica base64 → texto
+    let text = '';
     try {
       const base64 = dataUrl.split(',')[1];
-      const text = base64 ? decodeURIComponent(escape(atob(base64))) : dataUrl;
-      const pre = document.createElement('pre');
-      pre.textContent = text;
-      fileViewerBody.appendChild(pre);
+      text = base64 ? decodeURIComponent(escape(atob(base64))) : dataUrl;
     } catch {
-      const pre = document.createElement('pre');
-      pre.textContent = dataUrl;
-      fileViewerBody.appendChild(pre);
+      text = dataUrl;
     }
+
+    // Barra de ações do editor
+    const bar = document.createElement('div');
+    bar.className = 'viewer-edit-bar';
+
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'viewer-save-btn';
+    saveBtn.textContent = '💾 Salvar alterações na nota';
+    saveBtn.disabled = true;
+
+    const discardBtn = document.createElement('button');
+    discardBtn.className = 'viewer-discard-btn';
+    discardBtn.textContent = 'Descartar';
+    discardBtn.disabled = true;
+
+    const hint = document.createElement('span');
+    hint.className = 'viewer-edit-hint';
+    hint.textContent = 'Edite o texto acima e salve para atualizar a nota';
+
+    bar.append(saveBtn, discardBtn, hint);
+
+    // Textarea editável
+    const ta = document.createElement('textarea');
+    ta.className = 'viewer-textarea';
+    ta.value = text;
+    ta.spellcheck = false;
+
+    let originalText = text;
+
+    ta.addEventListener('input', () => {
+      const changed = ta.value !== originalText;
+      saveBtn.disabled = !changed;
+      discardBtn.disabled = !changed;
+    });
+
+    saveBtn.addEventListener('click', () => {
+      const newText = ta.value;
+      // Atualiza fileData (base64) e text da nota
+      const newB64 = btoa(unescape(encodeURIComponent(newText)));
+      const newDataUrl = `data:${mimeType};base64,` + newB64;
+
+      if (noteRef) {
+        noteRef.text = newText;
+        noteRef.fileData = newDataUrl;
+
+        // Atualiza o textarea da nota no canvas
+        const noteTa = canvas.querySelector(`.note[data-id="${noteRef.id}"] textarea`);
+        if (noteTa) {
+          noteTa.value = newText;
+          noteTa.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+
+        save();
+      }
+
+      originalText = newText;
+      saveBtn.disabled = true;
+      discardBtn.disabled = true;
+      hint.textContent = '✅ Salvo!';
+      setTimeout(() => { hint.textContent = 'Edite o texto acima e salve para atualizar a nota'; }, 2000);
+    });
+
+    discardBtn.addEventListener('click', () => {
+      ta.value = originalText;
+      saveBtn.disabled = true;
+      discardBtn.disabled = true;
+    });
+
+    fileViewerBody.appendChild(ta);
+    fileViewerBody.appendChild(bar);
 
   } else {
     // Tipo desconhecido — oferece download
@@ -540,12 +638,13 @@ viewport.addEventListener('drop', e => {
         }
         const reader = new FileReader();
         reader.onload = () => {
-          // Guarda como base64 para o visualizador; exibe preview do texto na nota
-          const asB64 = btoa(unescape(encodeURIComponent(reader.result)));
+          // Guarda o texto completo como fileData (base64) para o visualizador/editor
+          // e usa o texto completo diretamente na nota
+          const fullText = reader.result;
+          const asB64 = btoa(unescape(encodeURIComponent(fullText)));
           const dataUrl = `data:${file.type || 'text/plain'};base64,` + asB64;
-          const preview = reader.result.slice(0, 300) + (reader.result.length > 300 ? '…' : '');
           createNote(x, y, {
-            text: preview,
+            text: fullText,           // texto completo, sem corte
             fileData: dataUrl,
             fileName: file.name,
             fileMime: file.type || 'text/plain'
@@ -568,14 +667,46 @@ viewport.addEventListener('drop', e => {
         reader.readAsDataURL(file);
 
       } else {
-        createNote(x, y, { text: `📎 ${file.name}` });
+        // Verifica se pode ser uma pasta (webkitGetAsEntry)
+        const entry = e.dataTransfer.items && e.dataTransfer.items[i]
+          ? e.dataTransfer.items[i].webkitGetAsEntry()
+          : null;
+
+        if (entry && entry.isDirectory) {
+          // Pasta do PC: cria nota com link para o diretório
+          const dirPath = file.path || file.name; // Electron expõe file.path; navegador só tem name
+          const dirUrl = file.path
+            ? (dirPath.startsWith('file://') ? dirPath : 'file://' + dirPath.replace(/\\/g, '/'))
+            : null;
+          createNote(x, y, {
+            text: dirUrl
+              ? `[📁 ${file.name}](${dirUrl})`
+              : `📁 ${file.name}\n(Arraste do Explorer para abrir)`,
+            fileName: file.name,
+            fileMime: 'inode/directory'
+          });
+        } else {
+          createNote(x, y, { text: `📎 ${file.name}` });
+        }
       }
     });
     return;
   }
 
   const dropped = (e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain') || '').trim();
-  if (dropped) createNote(p.x - 110, p.y - 20, { text: dropped });
+  if (dropped) {
+    // Se for um caminho de diretório (file:// sem extensão, ou path local)
+    const isDir = dropped.startsWith('file://') && !dropped.match(/\.[a-zA-Z0-9]{1,6}$/);
+    if (isDir) {
+      const dirName = dropped.split('/').filter(Boolean).pop() || 'Pasta';
+      createNote(p.x - 110, p.y - 20, {
+        text: `[📁 ${decodeURIComponent(dirName)}](${dropped})`,
+        fileMime: 'inode/directory'
+      });
+    } else {
+      createNote(p.x - 110, p.y - 20, { text: dropped });
+    }
+  }
 });
 
 function focusOnNote(note) {
@@ -631,6 +762,16 @@ function bringToFront(el) {
 
 /* ===== NOTAS ===== */
 
+// Cores de accent do botão 🔗 Link por índice de cor (light | dark)
+const LINK_BTN_COLORS = [
+  { light: { bg: '#ffe034', border: '#c9a227', color: '#3a2f00' }, dark: { bg: '#6b6030', border: '#9a8840', color: '#ffe8a0' } }, // amarelo
+  { light: { bg: '#ffaed4', border: '#c97aa0', color: '#5a0030' }, dark: { bg: '#6b3558', border: '#9a5080', color: '#ffd0e8' } }, // rosa
+  { light: { bg: '#88ccff', border: '#4a9ad4', color: '#002244' }, dark: { bg: '#2a5070', border: '#4a80aa', color: '#c0e4ff' } }, // azul
+  { light: { bg: '#90d878', border: '#4a9a30', color: '#0a3000' }, dark: { bg: '#2a4f20', border: '#4a8038', color: '#c0f0a8' } }, // verde
+  { light: { bg: '#cca0ff', border: '#8856cc', color: '#300060' }, dark: { bg: '#4a3070', border: '#7a50a8', color: '#e8c8ff' } }, // roxo
+  { light: { bg: '#ffbb77', border: '#c07a30', color: '#3a1a00' }, dark: { bg: '#6b4020', border: '#a06030', color: '#ffe0b0' } }, // laranja
+];
+
 function applyNoteColor(el, handle, colorIndex) {
   const isDark = document.body.classList.contains('dark');
   const entry = NOTE_COLORS[colorIndex] || NOTE_COLORS[0];
@@ -644,12 +785,28 @@ function applyNoteColor(el, handle, colorIndex) {
   const ta = el.querySelector('textarea');
   if (ta) ta.style.color = isDark ? '#eee' : '#3a2f00';
 
-  el.querySelectorAll('.handle button:not(.del)').forEach(b => {
+  el.querySelectorAll('.handle button:not(.del):not(.make-link-btn)').forEach(b => {
     b.style.color = isDark ? '#ddd' : '#5a4a00';
+    b.style.background = '';
+    b.style.border = '';
   });
 
   const delBtn = el.querySelector('.del');
   if (delBtn) delBtn.style.color = isDark ? '#ff9a9a' : '#844';
+
+  // Botão 🔗 Link: cor de accent baseada na cor da nota
+  const mlb = el.querySelector('.make-link-btn');
+  if (mlb) {
+    const lc = (LINK_BTN_COLORS[colorIndex] || LINK_BTN_COLORS[0]);
+    const lcc = isDark ? lc.dark : lc.light;
+    mlb.style.background = lcc.bg;
+    mlb.style.borderColor = lcc.border;
+    mlb.style.border = `1px solid ${lcc.border}`;
+    mlb.style.color = lcc.color;
+    mlb.style.borderRadius = '4px';
+    mlb.style.padding = '1px 5px';
+    mlb.style.fontWeight = '600';
+  }
 }
 
 function renderNote(note) {
@@ -679,7 +836,8 @@ function renderNote(note) {
       <button class="pin-btn" title="Fixar nota">${note.pinned ? '📌' : '📍'}</button>
       <button class="color-btn" title="Cor da nota">🎨</button>
       <button class="cal-btn" title="Inserir data">📅</button>
-      <button class="link-open-btn" title="Abrir link (Shift+clique abre no navegador)" style="display:${isUrl(note.text) ? 'inline-flex' : 'none'}">🔗</button>
+      <button class="make-link-btn" title="Transformar texto selecionado em link">🔗 Link</button>
+      <button class="link-open-btn" title="Abrir link (Shift+clique abre no navegador)" style="display:${isUrl(note.text) ? 'inline-flex' : 'none'}">↗</button>
       <button class="del" title="Apagar">✕</button>
     </div>
 
@@ -698,6 +856,7 @@ function renderNote(note) {
   const pinBtn = el.querySelector('.pin-btn');
   const colorBtn = el.querySelector('.color-btn');
   const linkOpenBtn = el.querySelector('.link-open-btn');
+  const makeLinkBtn = el.querySelector('.make-link-btn');
   const linkOverlay = el.querySelector('.note-link-overlay');
 
   linkOpenBtn.addEventListener('click', e => {
@@ -709,63 +868,73 @@ function renderNote(note) {
     }
   });
 
+  // Botão "🔗 Link" — abre popup para transformar texto selecionado em link Markdown
+  makeLinkBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    openLocalLinkPopup(ta, el);
+  });
+
   // Botão "Ver arquivo" na barra de preview
   const filePreviewBar = el.querySelector('.note-file-preview');
   if (filePreviewBar) {
     filePreviewBar.addEventListener('click', e => {
       e.stopPropagation();
-      openFileViewer(note.fileData, note.fileName, note.fileMime);
+      openFileViewer(note.fileData, note.fileName, note.fileMime, note);
     });
   }
 
   // ---- OVERLAY DE LINKS ----
+  // Abordagem: não espelha o texto (causava sobreposição e bloqueava seleção).
+  // Em vez disso mostra badges de link flutuantes no canto inferior da nota,
+  // de forma que o textarea fica totalmente livre para seleção e cópia.
   function rebuildLinkOverlay() {
     if (!linkOverlay) return;
     const text = ta.value;
-    const urls = extractUrls(text);
+    const links = extractAllLinks(text);
 
-    if (!urls.length) {
-      linkOverlay.innerHTML = '';
+    linkOverlay.innerHTML = '';
+
+    if (!links.length) {
       linkOverlay.style.display = 'none';
       return;
     }
 
     linkOverlay.style.display = '';
 
-    // Reconstrói o conteúdo do overlay como texto com âncoras nos trechos de URL.
-    // O overlay fica posicionado exatamente sobre o textarea, com a mesma fonte
-    // e espaçamento, mas texto transparente — só os <a> ficam visíveis.
-    let html = '';
-    let cursor = 0;
-    for (const { url, start, end } of urls) {
-      if (start > cursor) html += escapeHtml(text.slice(cursor, start));
-      html += `<a href="${escapeHtml(url)}" title="${escapeHtml(url)}" data-url="${escapeHtml(url)}">` + escapeHtml(url) + '</a>';
-      cursor = end;
-    }
-    if (cursor < text.length) html += escapeHtml(text.slice(cursor));
-    linkOverlay.innerHTML = html;
+    links.forEach(link => {
+      const badge = document.createElement('a');
+      badge.href = '#';
+      badge.className = 'link-badge' + (link.isLocal ? ' local-link' : '');
+      badge.title = link.url;
+      badge.dataset.url = link.url;
+      badge.dataset.local = link.isLocal;
 
-    // Clique numa âncora: abre o visualizador em vez de navegar
-    // Shift+clique: abre diretamente no navegador
-    linkOverlay.querySelectorAll('a').forEach(a => {
-      a.addEventListener('click', e => {
+      // Ícone + label truncado
+      const icon = link.isLocal ? '📁' : '🔗';
+      const label = link.text.length > 28 ? link.text.slice(0, 26) + '…' : link.text;
+      badge.textContent = icon + ' ' + label;
+
+      badge.addEventListener('click', e => {
         e.preventDefault();
         e.stopPropagation();
-        if (e.shiftKey) {
-          window.open(a.dataset.url, '_blank', 'noopener');
+        const url = badge.dataset.url;
+        const isLocal = badge.dataset.local === 'true';
+
+        if (isLocal) {
+          const href = url.startsWith('file://') || url.startsWith('http') ? url : 'file://' + url;
+          window.open(href, '_blank', 'noopener,width=900,height=700');
+        } else if (e.shiftKey) {
+          window.open(url, '_blank', 'noopener,width=900,height=700');
         } else {
-          openUrlViewer(a.dataset.url);
+          openUrlViewer(url);
         }
       });
+
+      linkOverlay.appendChild(badge);
     });
   }
 
   rebuildLinkOverlay();
-
-  // Sincroniza scroll do overlay com o textarea
-  ta.addEventListener('scroll', () => {
-    if (linkOverlay) linkOverlay.scrollTop = ta.scrollTop;
-  });
 
   applyNoteColor(el, handle, note.colorIndex || 0);
 
@@ -1577,7 +1746,112 @@ darkBtn.addEventListener('click', () => {
   });
 });
 
+/* ===== POPUP DE LINK LOCAL ===== */
+
+const localLinkPopup = document.getElementById('local-link-popup');
+const llpUrlInput    = document.getElementById('llp-url-input');
+const llpConfirm     = document.getElementById('llp-confirm');
+const llpCancel      = document.getElementById('llp-cancel');
+
+let llpTargetTextarea = null;
+let llpSelStart = 0;
+let llpSelEnd   = 0;
+let llpSelectedText = '';
+
+function openLocalLinkPopup(textarea, noteEl) {
+  const selStart = textarea.selectionStart;
+  const selEnd   = textarea.selectionEnd;
+  const selected = textarea.value.slice(selStart, selEnd).trim();
+
+  llpTargetTextarea = textarea;
+  llpSelStart = selStart;
+  llpSelEnd   = selEnd;
+  llpSelectedText = selected;
+
+  // Aplica dark mode no popup dinamicamente
+  const isDark = document.body.classList.contains('dark');
+  localLinkPopup.classList.toggle('dark', isDark);
+
+  // Posiciona o popup abaixo do handle da nota
+  const handleEl = noteEl.querySelector('.handle');
+  const rect = handleEl.getBoundingClientRect();
+
+  localLinkPopup.classList.remove('hidden');
+  localLinkPopup.offsetHeight; // força reflow
+  localLinkPopup.classList.add('visible');
+
+  localLinkPopup.style.left = Math.min(rect.left, window.innerWidth - 400) + 'px';
+  localLinkPopup.style.top  = (rect.bottom + 6) + 'px';
+
+  llpUrlInput.value = '';
+  if (selected && /^(https?|file):\/\//.test(selected)) {
+    llpUrlInput.value = selected;
+  }
+  llpUrlInput.focus();
+  llpUrlInput.select();
+}
+
+function closeLocalLinkPopup() {
+  localLinkPopup.classList.remove('visible');
+  setTimeout(() => {
+    if (!localLinkPopup.classList.contains('visible')) {
+      localLinkPopup.classList.add('hidden');
+    }
+  }, 200);
+  llpTargetTextarea = null;
+}
+
+function applyLocalLink() {
+  if (!llpTargetTextarea) return;
+  const url = llpUrlInput.value.trim();
+  if (!url) { closeLocalLinkPopup(); return; }
+
+  const ta = llpTargetTextarea;
+  const label = llpSelectedText || url;
+  const before = ta.value.slice(0, llpSelStart);
+  const after  = ta.value.slice(llpSelEnd);
+  const insertion = `[${label}](${url})`;
+
+  ta.value = before + insertion + after;
+
+  // Dispara input para atualizar estado da nota
+  ta.dispatchEvent(new Event('input', { bubbles: true }));
+
+  const newPos = before.length + insertion.length;
+  ta.setSelectionRange(newPos, newPos);
+  ta.focus();
+
+  closeLocalLinkPopup();
+}
+
+llpConfirm.addEventListener('click', applyLocalLink);
+
+llpCancel.addEventListener('click', closeLocalLinkPopup);
+
+llpUrlInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); applyLocalLink(); }
+  if (e.key === 'Escape') { e.preventDefault(); closeLocalLinkPopup(); }
+});
+
+// Fecha ao clicar fora do popup
+document.addEventListener('mousedown', e => {
+  if (localLinkPopup.classList.contains('hidden')) return;
+  if (!localLinkPopup.contains(e.target)) closeLocalLinkPopup();
+});
+
 /* ===== START ===== */
+
+function renderBoardSelect() {
+  const sel = document.getElementById('boardSelect');
+  sel.innerHTML = '';
+  boards.forEach(b => {
+    const opt = document.createElement('option');
+    opt.value = b.id;
+    opt.textContent = b.name;
+    if (b.id === currentBoardId) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
 
 renderBoardSelect();
 applyTransform();

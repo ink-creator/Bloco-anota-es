@@ -20,9 +20,13 @@ No installation is required. Inside the folder, double-click **`index.html`** �
 
 * **Connect** — connects two notes with a line (click one, then the other). Click the line afterward to give it a name
 
-* **Links** — add links to notes and open them directly in the app or in your browser
+* **Links** — add links to notes and open them directly in the app or in your browser. To turn selected text into a link, click the **🔗 Link** button on the note's top bar
 
-* **Files** — add files to notes and access them directly from the app
+* **Local links and folders** — drag a folder from your file explorer onto the board to create a shortcut badge that opens that directory. You can also link to local files using the 🔗 Link button with a `file://` path
+
+* **Files** — drag a file onto the board to attach it to a note. Text files (`.txt`, `.md`, `.csv`, `.json`) appear fully editable inside the note and can be opened in a full editor by clicking 👁 View
+
+* **Edit text files** — when viewing a text file, you can edit it directly and click **💾 Save changes to note** to update the note's content
 
 * **Images** — add photos and other images to notes and view them directly inside the app
 
@@ -32,7 +36,7 @@ No installation is required. Inside the folder, double-click **`index.html`** �
 
 * **Zoom** — scroll the mouse wheel, or use the `-` / `+` buttons at the top
 
-* **Navigate the Board** — click and drag the empty background
+* **Navigate the Board** — click and drag the empty background (text in notes won't be selected while panning)
 
 * **Boards** — use the dropdown menu at the top to have multiple separate note boards (e.g. one board for work and another for personal notes)
 
@@ -64,7 +68,7 @@ See the [LICENSE](LICENSE) file for more information.
 
 ---
 
-# Como usar o Notas Flutuantes -- Português
+# Como usar o Notas Flutuantes — Português
 
 ## Abrindo o app
 
@@ -86,9 +90,13 @@ Não precisa instalar nada. Dentro da pasta, dê duplo clique no arquivo **`inde
 
 * **Ligar** — conecta duas notas com uma linha (clique em uma, depois na outra). Clique na linha depois pra dar um nome a ela
 
-* **Links** — adicione links às notas e abra-os diretamente dentro do app ou no navegador
+* **Links** — adicione links às notas e abra-os diretamente dentro do app ou no navegador. Para transformar um texto em link, selecione-o e clique no botão **🔗 Link** na barra superior da nota
 
-* **Arquivos** — adicione arquivos às notas e acesse-os diretamente pelo app
+* **Links locais e pastas** — arraste uma pasta do Explorer ou Finder direto no quadro para criar um atalho que abre aquele diretório. Você também pode criar links para arquivos locais pelo botão 🔗 Link usando um caminho `file://`
+
+* **Arquivos** — arraste um arquivo para o quadro para anexá-lo a uma nota. Arquivos de texto (`.txt`, `.md`, `.csv`, `.json`) aparecem completos e editáveis na nota, e podem ser abertos no editor completo clicando em 👁 Ver
+
+* **Editar arquivos de texto** — ao visualizar um arquivo de texto, você pode editar o conteúdo diretamente e clicar em **💾 Salvar alterações na nota** para atualizar a nota
 
 * **Imagens** — adicione fotos e outras imagens às notas e visualize-as diretamente dentro do app
 
@@ -98,7 +106,7 @@ Não precisa instalar nada. Dentro da pasta, dê duplo clique no arquivo **`inde
 
 * **Zoom** — gire a rodinha do mouse, ou use os botões `-` / `+` no topo
 
-* **Navegar pelo quadro** — clique e arraste o fundo vazio
+* **Navegar pelo quadro** — clique e arraste o fundo vazio (o texto das notas não é selecionado durante a navegação)
 
 * **Quadros** — use o menu suspenso no topo pra ter várias "telas" de notas separadas (ex: um quadro pro trabalho, outro pessoal)
 

@@ -285,6 +285,7 @@ body {
 
 .note textarea {
   flex: 1;
+  min-height: 0;
   width: 100%;
   border: none;
   background: transparent;
@@ -421,32 +422,72 @@ body {
   text-align: center;
 }
 
-/* ===== LINK OVERLAY ===== */
+/* ===== LINK OVERLAY — badges na base da nota ===== */
 
 .note-link-overlay {
-  position: absolute;
-  inset: 28px 10px 10px 10px;
-  pointer-events: none;
-  overflow: hidden;
-  z-index: 3;
-  white-space: pre-wrap;
-  word-wrap: break-word;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px 6px 2px 6px;
+  flex-shrink: 0;
+  /* não tem position:absolute nem cobre o textarea */
+}
+
+.note-link-overlay .link-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 11px;
   font-family: inherit;
-  font-size: 14px;
-  color: transparent;
-  line-height: 1.4;
-}
-
-.note-link-overlay a {
-  pointer-events: auto;
-  color: #1a6fbf;
-  text-decoration: underline;
-  cursor: pointer;
-  border-radius: 2px;
-}
-
-.note-link-overlay a:hover {
   background: rgba(26, 111, 191, 0.1);
+  color: #1a6fbf;
+  border: 1px solid rgba(26, 111, 191, 0.25);
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+  transition: background 0.12s;
+}
+
+.note-link-overlay .link-badge:hover {
+  background: rgba(26, 111, 191, 0.2);
+  text-decoration: none;
+}
+
+.note-link-overlay .link-badge.local-link {
+  background: rgba(122, 79, 190, 0.1);
+  color: #7a4fbe;
+  border-color: rgba(122, 79, 190, 0.25);
+}
+
+.note-link-overlay .link-badge.local-link:hover {
+  background: rgba(122, 79, 190, 0.2);
+}
+
+/* dark mode */
+body.dark .note-link-overlay .link-badge {
+  background: rgba(122, 184, 245, 0.12);
+  color: #7ab8f5;
+  border-color: rgba(122, 184, 245, 0.2);
+}
+
+body.dark .note-link-overlay .link-badge:hover {
+  background: rgba(122, 184, 245, 0.22);
+}
+
+body.dark .note-link-overlay .link-badge.local-link {
+  background: rgba(192, 157, 224, 0.12);
+  color: #c09de0;
+  border-color: rgba(192, 157, 224, 0.2);
+}
+
+body.dark .note-link-overlay .link-badge.local-link:hover {
+  background: rgba(192, 157, 224, 0.22);
 }
 
 /* ===== VISUALIZADOR DE ARQUIVO ===== */
@@ -623,15 +664,7 @@ body {
   font-size: 13px;
 }
 
-/* Modo escuro — modal e overlay de links */
-
-body.dark .note-link-overlay a {
-  color: #7ab8f5;
-}
-
-body.dark .note-link-overlay a:hover {
-  background: rgba(122, 184, 245, 0.12);
-}
+/* dark mode — modal e overlay de links */
 
 body.dark .note-file-preview {
   background: rgba(255,255,255,0.07);
@@ -680,6 +713,238 @@ body.dark #file-viewer-body pre {
 body.dark #file-viewer-body .viewer-placeholder {
   color: #aaa;
 }
+
+/* ===== EDITOR DE TEXTO NO VISUALIZADOR ===== */
+
+.viewer-textarea {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  border: none;
+  outline: none;
+  resize: none;
+  padding: 16px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #222;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.viewer-edit-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-top: 1px solid #e2dccc;
+  background: #faf7ef;
+  flex-shrink: 0;
+}
+
+.viewer-save-btn {
+  border: 1px solid #c9a227;
+  background: #ffe874;
+  color: #3a2f00;
+  border-radius: 6px;
+  padding: 5px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: 600;
+  transition: background 0.12s;
+}
+
+.viewer-save-btn:hover:not(:disabled) { background: #ffd866; }
+.viewer-save-btn:disabled { opacity: 0.45; cursor: default; }
+
+.viewer-discard-btn {
+  border: 1px solid #d4cdb8;
+  background: #fff;
+  color: #5a4a00;
+  border-radius: 6px;
+  padding: 5px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  transition: background 0.12s;
+}
+
+.viewer-discard-btn:hover:not(:disabled) { background: #f0ead8; }
+.viewer-discard-btn:disabled { opacity: 0.45; cursor: default; }
+
+.viewer-edit-hint {
+  font-size: 12px;
+  color: #999;
+  margin-left: auto;
+}
+
+/* dark */
+body.dark .viewer-textarea {
+  background: #111;
+  color: #ddd;
+}
+
+body.dark .viewer-edit-bar {
+  background: #1b1b1b;
+  border-top-color: #333;
+}
+
+body.dark .viewer-save-btn {
+  background: #3a3420;
+  border-color: #6b6030;
+  color: #eee;
+}
+
+body.dark .viewer-save-btn:hover:not(:disabled) { background: #4a4220; }
+
+body.dark .viewer-discard-btn {
+  background: #2a2a2a;
+  border-color: #444;
+  color: #ccc;
+}
+
+body.dark .viewer-discard-btn:hover:not(:disabled) { background: #333; }
+
+body.dark .viewer-edit-hint { color: #666; }
+
+/* ===== POPUP DE LINK LOCAL ===== */
+
+#local-link-popup {
+  position: fixed;
+  z-index: 500;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+#local-link-popup.visible {
+  pointer-events: auto;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+#local-link-popup.hidden {
+  display: none;
+}
+
+#llp-inner {
+  background: #fff;
+  border: 1px solid #d4cdb8;
+  border-radius: 8px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.22);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 300px;
+  max-width: 380px;
+}
+
+#llp-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #5a4a00;
+}
+
+#llp-url-input {
+  border: 1px solid #d4cdb8;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #222;
+  outline: none;
+  background: #faf7ef;
+  width: 100%;
+}
+
+#llp-url-input:focus {
+  border-color: #c9a227;
+  background: #fff;
+}
+
+#llp-buttons {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+#llp-confirm {
+  background: #ffe874;
+  border: 1px solid #c9a227;
+  border-radius: 6px;
+  padding: 5px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  color: #3a2f00;
+  font-weight: 600;
+}
+
+#llp-confirm:hover { background: #ffd866; }
+
+#llp-cancel {
+  background: #faf7ef;
+  border: 1px solid #d4cdb8;
+  border-radius: 6px;
+  padding: 5px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  color: #5a4a00;
+}
+
+#llp-cancel:hover { background: #f0ead8; }
+
+/* Links locais dentro das notas */
+.note-link-overlay a.local-link {
+  color: #7a4fbe;
+  text-decoration: underline dotted;
+}
+
+.note-link-overlay a.local-link:hover {
+  background: rgba(122, 79, 190, 0.1);
+}
+
+/* Botão "🔗 Criar link" dentro do handle da nota */
+.make-link-btn {
+  font-size: 12px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  /* background e border são aplicados via JS por applyNoteColor */
+}
+
+.make-link-btn:hover {
+  filter: brightness(0.9);
+}
+
+/* ===== DARK — link popup ===== */
+
+body.dark #llp-inner,
+#local-link-popup.dark #llp-inner { background: #1b1b1b; border-color: #444; }
+
+body.dark #llp-label,
+#local-link-popup.dark #llp-label { color: #ddd; }
+
+body.dark #llp-url-input,
+#local-link-popup.dark #llp-url-input { background: #242424; border-color: #444; color: #eee; }
+
+body.dark #llp-url-input:focus,
+#local-link-popup.dark #llp-url-input:focus { border-color: #c9a227; background: #1b1b1b; }
+
+body.dark #llp-confirm,
+#local-link-popup.dark #llp-confirm { background: #3a3420; border-color: #6b6030; color: #eee; }
+
+body.dark #llp-confirm:hover,
+#local-link-popup.dark #llp-confirm:hover { background: #4a4220; }
+
+body.dark #llp-cancel,
+#local-link-popup.dark #llp-cancel { background: #2a2a2a; border-color: #444; color: #ccc; }
+
+body.dark #llp-cancel:hover,
+#local-link-popup.dark #llp-cancel:hover { background: #333; }
 
 /* ===== MODO ESCURO ===== */
 
