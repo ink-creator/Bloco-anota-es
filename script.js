@@ -271,6 +271,9 @@ function centerOfView() {
 }
 
 viewport.addEventListener('wheel', e => {
+  // Allow natural scroll in textareas
+  if (e.target.tagName === 'TEXTAREA') return;
+  
   e.preventDefault();
 
   const rect = viewport.getBoundingClientRect();
@@ -303,15 +306,15 @@ viewport.addEventListener('mousedown', e => {
     applyTransform();
   }
 
+  function preventSelect(ev) {
+    ev.preventDefault();
+  }
+
   function up() {
     document.removeEventListener('mousemove', move);
     document.removeEventListener('mouseup', up);
     document.removeEventListener('selectstart', preventSelect);
     viewport.classList.remove('panning');
-  }
-
-  function preventSelect(ev) {
-    if (moved) ev.preventDefault();
   }
 
   document.addEventListener('mousemove', move);
