@@ -9,35 +9,63 @@ const BOARDS_KEY = 'notas-flutuantes:boards';
 const CURRENT_BOARD_KEY = 'notas-flutuantes:current-board';
 
 const NOTE_COLORS = [
-  { // amarelo
-    light: { bg: '#fff8c4', border: '#e0ce6a', handle: '#ffe874' },
-    dark:  { bg: '#4a4420', border: '#6b6030', handle: '#5c5428' }
+  { name: 'Amarelo',
+    light: { bg: '#fff8c4', border: '#e0ce6a', handle: '#ffe874', swatch: '#f0c800' },
+    dark:  { bg: '#3a3210', border: '#5e5428', handle: '#4a4018', swatch: '#c8a800' }
   },
-  { // rosa
-    light: { bg: '#ffe1ef', border: '#e6a8c4', handle: '#ffc4dd' },
-    dark:  { bg: '#4a2e3a', border: '#6b4256', handle: '#5c3548' }
+  { name: 'Laranja',
+    light: { bg: '#ffe6cc', border: '#e6a850', handle: '#ffd4a0', swatch: '#f08020' },
+    dark:  { bg: '#3a2610', border: '#6a4820', handle: '#4a3018', swatch: '#c06018' }
   },
-  { // azul
-    light: { bg: '#dbeeff', border: '#a8c9e6', handle: '#c0e0ff' },
-    dark:  { bg: '#22384a', border: '#345870', handle: '#2a4a63' }
+  { name: 'Vermelho',
+    light: { bg: '#ffd8d8', border: '#e08888', handle: '#ffb8b8', swatch: '#d84040' },
+    dark:  { bg: '#3a1010', border: '#6a2828', handle: '#4a1818', swatch: '#a02828' }
   },
-  { // verde
-    light: { bg: '#e0f5d8', border: '#a8cf8e', handle: '#c8ebb0' },
-    dark:  { bg: '#2c3f24', border: '#456b34', handle: '#375430' }
+  { name: 'Rosa claro',
+    light: { bg: '#ffe1ef', border: '#e8a0c0', handle: '#ffc4de', swatch: '#f070a8' },
+    dark:  { bg: '#3a1828', border: '#6a3050', handle: '#4a2038', swatch: '#b04878' }
   },
-  { // roxo
-    light: { bg: '#ecdcff', border: '#c3a3e6', handle: '#ddc0ff' },
-    dark:  { bg: '#3a2c4a', border: '#5a4270', handle: '#4a3563' }
+  { name: 'Rosa escuro',
+    light: { bg: '#ffc8dc', border: '#e06090', handle: '#ffaac8', swatch: '#d83878' },
+    dark:  { bg: '#3e1030', border: '#701848', handle: '#501838', swatch: '#a02860' }
   },
-  { // laranja
-    light: { bg: '#ffe6cc', border: '#e6b380', handle: '#ffd4a3' },
-    dark:  { bg: '#4a3420', border: '#6b5030', handle: '#5c4228' }
-  }
+  { name: 'Roxo',
+    light: { bg: '#ecdcff', border: '#b890e0', handle: '#ddc0ff', swatch: '#9050d0' },
+    dark:  { bg: '#281840', border: '#502878', handle: '#382058', swatch: '#6830a8' }
+  },
+  { name: 'Azul',
+    light: { bg: '#dbeeff', border: '#88bce8', handle: '#bcd8ff', swatch: '#3880d0' },
+    dark:  { bg: '#101e38', border: '#203860', handle: '#182848', swatch: '#2060a8' }
+  },
+  { name: 'Ciano',
+    light: { bg: '#d4f4f8', border: '#60c0cc', handle: '#a8e4ec', swatch: '#18a0b0' },
+    dark:  { bg: '#082830', border: '#105060', handle: '#103840', swatch: '#108090' }
+  },
+  { name: 'Verde claro',
+    light: { bg: '#dcf5d0', border: '#80c860', handle: '#c0ecac', swatch: '#48a828' },
+    dark:  { bg: '#102010', border: '#205818', handle: '#183018', swatch: '#307818' }
+  },
+  { name: 'Verde escuro',
+    light: { bg: '#c4e8b4', border: '#50a830', handle: '#a0d880', swatch: '#288818' },
+    dark:  { bg: '#081808', border: '#184010', handle: '#102010', swatch: '#186010' }
+  },
+  { name: 'Marrom',
+    light: { bg: '#f0e0c8', border: '#c09060', handle: '#e0c8a0', swatch: '#a06030' },
+    dark:  { bg: '#281808', border: '#503020', handle: '#382010', swatch: '#784828' }
+  },
+  { name: 'Cinza',
+    light: { bg: '#efefef', border: '#a8a8b8', handle: '#d8d8e4', swatch: '#7070a0' },
+    dark:  { bg: '#1c1c28', border: '#404058', handle: '#282840', swatch: '#505080' }
+  },
 ];
 
 let linkMode = false;
 let linkPick = null;
 let activeNoteId = null;
+
+// Seleção múltipla
+let selectedNoteIds = new Set();
+let isMultiSelecting = false;
 
 let topZ = 10;
 
@@ -137,6 +165,7 @@ function switchBoard(id) {
   linkPick = null;
   linkMode = false;
   linkBtn.classList.remove('active');
+  selectedNoteIds.clear();
 
   undoStack = [];
   redoStack = [];
@@ -286,10 +315,84 @@ document.getElementById('zoomIn').addEventListener('click', () => zoomAtCenter(1
 document.getElementById('zoomOut').addEventListener('click', () => zoomAtCenter(1 / 1.2));
 document.getElementById('zoomReset').addEventListener('click', resetView);
 
-/* Arrastar o fundo para navegar (pan) */
+/* Arrastar o fundo para navegar (pan) ou selecionar múltiplas notas (Shift) */
+
+// Retângulo de seleção via arraste com Shift
+const selectionRect = document.createElement('div');
+selectionRect.id = 'selection-rect';
+document.body.appendChild(selectionRect);
+
+function updateMultiSelectHighlight() {
+  document.querySelectorAll('.note').forEach(el => {
+    const id = Number(el.dataset.id);
+    el.classList.toggle('multi-selected', selectedNoteIds.has(id));
+  });
+}
 
 viewport.addEventListener('mousedown', e => {
   if (e.target !== canvas && e.target !== viewport) return;
+
+  // Shift + arraste = seleção por retângulo
+  if (e.shiftKey) {
+    e.preventDefault();
+    const vRect = viewport.getBoundingClientRect();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    let moved = false;
+
+    selectionRect.style.display = 'none';
+
+    function moveSelect(ev) {
+      moved = true;
+      const x1 = Math.min(startX, ev.clientX);
+      const y1 = Math.min(startY, ev.clientY);
+      const x2 = Math.max(startX, ev.clientX);
+      const y2 = Math.max(startY, ev.clientY);
+
+      selectionRect.style.display = 'block';
+      selectionRect.style.left   = x1 + 'px';
+      selectionRect.style.top    = y1 + 'px';
+      selectionRect.style.width  = (x2 - x1) + 'px';
+      selectionRect.style.height = (y2 - y1) + 'px';
+
+      // Converte coordenadas de tela para espaço do mundo
+      const wx1 = (x1 - vRect.left - panX) / zoom;
+      const wy1 = (y1 - vRect.top  - panY) / zoom;
+      const wx2 = (x2 - vRect.left - panX) / zoom;
+      const wy2 = (y2 - vRect.top  - panY) / zoom;
+
+      selectedNoteIds.clear();
+      state.notes.forEach(note => {
+        const el = canvas.querySelector(`.note[data-id="${note.id}"]`);
+        if (!el) return;
+        const nw = el.offsetWidth, nh = el.offsetHeight;
+        const inside = note.x < wx2 && note.x + nw > wx1 &&
+                       note.y < wy2 && note.y + nh > wy1;
+        if (inside) selectedNoteIds.add(note.id);
+      });
+      updateMultiSelectHighlight();
+    }
+
+    function upSelect() {
+      document.removeEventListener('mousemove', moveSelect);
+      document.removeEventListener('mouseup', upSelect);
+      selectionRect.style.display = 'none';
+      if (!moved) {
+        selectedNoteIds.clear();
+        updateMultiSelectHighlight();
+      }
+    }
+
+    document.addEventListener('mousemove', moveSelect);
+    document.addEventListener('mouseup', upSelect);
+    return;
+  }
+
+  // Clique no fundo sem shift: limpa seleção múltipla
+  if (selectedNoteIds.size > 0) {
+    selectedNoteIds.clear();
+    updateMultiSelectHighlight();
+  }
 
   const startX = e.clientX;
   const startY = e.clientY;
@@ -351,24 +454,56 @@ function extractUrls(text) {
   return results;
 }
 
-// Detecta links no formato [texto](url) — inclui URLs locais (file://, caminhos)
+// Detecta links no formato [texto](url) e (url) simples
 // Retorna array de {text, url, start, end, isLocal}
 function extractMarkdownLinks(text) {
   const results = [];
-  const re = /\[([^\]]+)\]\(([^)]+)\)/g;
+
+  // [label](url) — label pode ser vazio
+  const reMd = /\[([^\]]*)\]\(([^)]+)\)/g;
   let m;
-  while ((m = re.exec(text)) !== null) {
+  while ((m = reMd.exec(text)) !== null) {
     const url = m[2].trim();
     const isLocal = !url.match(/^https?:\/\//i);
-    results.push({
-      text: m[1],
-      url,
-      start: m.index,
-      end: m.index + m[0].length,
-      isLocal
-    });
+    const displayText = m[1].trim() || formatLinkLabel(url);
+    results.push({ text: displayText, rawLabel: m[1], url, start: m.index, end: m.index + m[0].length, isLocal });
   }
+
+  // (url) — http(s) ou local: file:// ou caminho Windows
+  const reParen = /\(((?:https?:\/\/|file:\/\/|[A-Za-z]:\\)[^)\s]+)\)/g;
+  while ((m = reParen.exec(text)) !== null) {
+    const url = m[1].trim();
+    const isLocal = !url.match(/^https?:\/\//i);
+    const already = results.some(r => r.start <= m.index && r.end >= m.index + m[0].length);
+    if (!already) {
+      results.push({ text: formatLinkLabel(url), rawLabel: '', url, start: m.index, end: m.index + m[0].length, isLocal });
+    }
+  }
+
   return results;
+}
+
+// Formata um URL/caminho para exibição amigável no badge
+function formatLinkLabel(url) {
+  if (url.startsWith('file://')) {
+    // Remove prefixo file:// e decodifica URI
+    let path = decodeURIComponent(url.replace(/^file:\/\//, ''));
+    // Normaliza barras
+    path = path.replace(/\//g, '\\');
+    // Se o caminho for longo, trunca mostrando início e fim
+    const parts = path.split('\\').filter(Boolean);
+    if (parts.length > 3) {
+      return parts[0] + '\\...' + '\\' + parts.slice(-2).join('\\');
+    }
+    return path;
+  }
+  if (url.startsWith('http')) {
+    try {
+      const u = new URL(url);
+      return u.hostname + (u.pathname !== '/' ? u.pathname.slice(0, 20) + (u.pathname.length > 20 ? '…' : '') : '');
+    } catch { return url.slice(0, 30); }
+  }
+  return url.length > 30 ? url.slice(0, 28) + '…' : url;
 }
 
 // Combina URLs soltas e links Markdown; retorna lista unificada ordenada por posição
@@ -765,14 +900,20 @@ function bringToFront(el) {
 
 /* ===== NOTAS ===== */
 
-// Cores de accent do botão 🔗 Link por índice de cor (light | dark)
+// Cores de accent do botão 🔗 Link — 1 entrada por NOTE_COLORS
 const LINK_BTN_COLORS = [
-  { light: { bg: '#ffe034', border: '#c9a227', color: '#3a2f00' }, dark: { bg: '#6b6030', border: '#9a8840', color: '#ffe8a0' } }, // amarelo
-  { light: { bg: '#ffaed4', border: '#c97aa0', color: '#5a0030' }, dark: { bg: '#6b3558', border: '#9a5080', color: '#ffd0e8' } }, // rosa
-  { light: { bg: '#88ccff', border: '#4a9ad4', color: '#002244' }, dark: { bg: '#2a5070', border: '#4a80aa', color: '#c0e4ff' } }, // azul
-  { light: { bg: '#90d878', border: '#4a9a30', color: '#0a3000' }, dark: { bg: '#2a4f20', border: '#4a8038', color: '#c0f0a8' } }, // verde
-  { light: { bg: '#cca0ff', border: '#8856cc', color: '#300060' }, dark: { bg: '#4a3070', border: '#7a50a8', color: '#e8c8ff' } }, // roxo
-  { light: { bg: '#ffbb77', border: '#c07a30', color: '#3a1a00' }, dark: { bg: '#6b4020', border: '#a06030', color: '#ffe0b0' } }, // laranja
+  { light: { bg: '#ffe034', border: '#c9a020', color: '#3a2f00' }, dark: { bg: '#504818', border: '#988030', color: '#ffe090' } }, // Amarelo
+  { light: { bg: '#ffbb70', border: '#c07020', color: '#3a1800' }, dark: { bg: '#503018', border: '#a06020', color: '#ffd890' } }, // Laranja
+  { light: { bg: '#ff9999', border: '#c03838', color: '#500000' }, dark: { bg: '#501010', border: '#903030', color: '#ffb8b8' } }, // Vermelho
+  { light: { bg: '#ffb0d0', border: '#c07090', color: '#50002a' }, dark: { bg: '#501830', border: '#985070', color: '#ffc8e0' } }, // Rosa claro
+  { light: { bg: '#ff90b8', border: '#c03868', color: '#500020' }, dark: { bg: '#581028', border: '#a02858', color: '#ffb0d0' } }, // Rosa escuro
+  { light: { bg: '#cc99ff', border: '#8850c8', color: '#300058' }, dark: { bg: '#382058', border: '#7840a8', color: '#e8c8ff' } }, // Roxo
+  { light: { bg: '#88c8ff', border: '#3880c8', color: '#002040' }, dark: { bg: '#182840', border: '#3060a0', color: '#b8d8ff' } }, // Azul
+  { light: { bg: '#70d8e8', border: '#189ab0', color: '#002830' }, dark: { bg: '#103038', border: '#187898', color: '#a8e4ef' } }, // Ciano
+  { light: { bg: '#98d870', border: '#40a020', color: '#0a2800' }, dark: { bg: '#183018', border: '#307818', color: '#b8e8a0' } }, // Verde claro
+  { light: { bg: '#70c848', border: '#288018', color: '#081800' }, dark: { bg: '#102010', border: '#205818', color: '#98d878' } }, // Verde escuro
+  { light: { bg: '#e0b880', border: '#a06020', color: '#381800' }, dark: { bg: '#382010', border: '#784020', color: '#e8c898' } }, // Marrom
+  { light: { bg: '#c8c8d8', border: '#7070a0', color: '#202040' }, dark: { bg: '#282840', border: '#484870', color: '#d0d0e8' } }, // Cinza
 ];
 
 function applyNoteColor(el, handle, colorIndex) {
@@ -905,8 +1046,7 @@ function renderNote(note) {
     linkOverlay.style.display = '';
 
     links.forEach(link => {
-      const badge = document.createElement('a');
-      badge.href = '#';
+      const badge = document.createElement('span');
       badge.className = 'link-badge' + (link.isLocal ? ' local-link' : '');
       badge.title = link.url;
       badge.dataset.url = link.url;
@@ -915,9 +1055,12 @@ function renderNote(note) {
       // Ícone + label truncado
       const icon = link.isLocal ? '📁' : '🔗';
       const label = link.text.length > 28 ? link.text.slice(0, 26) + '…' : link.text;
-      badge.textContent = icon + ' ' + label;
 
-      badge.addEventListener('click', e => {
+      const mainSpan = document.createElement('span');
+      mainSpan.className = 'link-badge-label';
+      mainSpan.textContent = icon + ' ' + label;
+
+      mainSpan.addEventListener('click', e => {
         e.preventDefault();
         e.stopPropagation();
         const url = badge.dataset.url;
@@ -933,6 +1076,36 @@ function renderNote(note) {
         }
       });
 
+      // Botão × para remover o link da nota
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'link-badge-remove';
+      removeBtn.title = 'Remover link';
+      removeBtn.textContent = '×';
+      removeBtn.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Remove o trecho markdown [label](url) do texto da nota
+        const currentText = ta.value;
+        // Recalcula posição do link no texto atual
+        const allLinks = extractAllLinks(currentText);
+        const target = allLinks.find(l => l.url === link.url && l.text === link.text);
+        if (target) {
+          const before = currentText.slice(0, target.start);
+          const after  = currentText.slice(target.end);
+          ta.value = (before + after).replace(/\n{3,}/g, '\n\n');
+        } else {
+          // Fallback: remove qualquer ocorrência do padrão com essa URL
+          const escaped = link.url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          ta.value = currentText.replace(new RegExp(`\\[[^\\]]*\\]\\(${escaped}\\)`, 'g'), '').replace(/\n{3,}/g, '\n\n');
+        }
+
+        note.text = ta.value;
+        ta.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+
+      badge.appendChild(mainSpan);
+      badge.appendChild(removeBtn);
       linkOverlay.appendChild(badge);
     });
   }
@@ -1015,17 +1188,17 @@ function renderNote(note) {
     const popup = document.createElement('div');
     popup.className = 'color-popup';
 
+    const isDarkNow = document.body.classList.contains('dark');
+
     NOTE_COLORS.forEach((c, i) => {
       const sw = document.createElement('button');
-      sw.className = 'color-swatch';
-      sw.style.background = c.light.bg;
-      sw.title = 'Cor ' + (i + 1);
+      sw.className = 'color-swatch' + (i === (note.colorIndex || 0) ? ' active-swatch' : '');
+      sw.style.background = isDarkNow ? c.dark.swatch : c.light.swatch;
+      sw.title = c.name || ('Cor ' + (i + 1));
 
       sw.addEventListener('click', ev => {
         ev.stopPropagation();
-
         pushUndoSnapshot();
-
         note.colorIndex = i;
         applyNoteColor(el, handle, i);
         popup.remove();
@@ -1095,23 +1268,36 @@ function renderNote(note) {
     if (e.target.tagName === 'BUTTON') return;
     if (note.pinned) return;
 
-    pushUndoSnapshot();
+    // Se a nota clicada faz parte da seleção múltipla, arrasta todas juntas
+    const isMultiDrag = selectedNoteIds.size > 1 && selectedNoteIds.has(note.id);
 
+    pushUndoSnapshot();
     bringToFront(el);
     setActiveNote(note.id);
 
     const startX = e.clientX;
     const startY = e.clientY;
 
-    const origX = note.x;
-    const origY = note.y;
+    // Salva posições originais de todas as notas envolvidas
+    const dragNotes = isMultiDrag
+      ? state.notes.filter(n => selectedNoteIds.has(n.id) && !n.pinned)
+      : [note];
+
+    const origPositions = dragNotes.map(n => ({ note: n, x: n.x, y: n.y }));
 
     function move(ev) {
-      note.x = origX + (ev.clientX - startX) / zoom;
-      note.y = origY + (ev.clientY - startY) / zoom;
+      const dx = (ev.clientX - startX) / zoom;
+      const dy = (ev.clientY - startY) / zoom;
 
-      el.style.left = note.x + 'px';
-      el.style.top = note.y + 'px';
+      origPositions.forEach(({ note: n, x, y }) => {
+        n.x = x + dx;
+        n.y = y + dy;
+        const el2 = canvas.querySelector(`.note[data-id="${n.id}"]`);
+        if (el2) {
+          el2.style.left = n.x + 'px';
+          el2.style.top  = n.y + 'px';
+        }
+      });
 
       drawLinks();
     }
@@ -1126,9 +1312,21 @@ function renderNote(note) {
     document.addEventListener('mouseup', up);
   });
 
-  /* ===== LIGAR NOTAS ===== */
+  /* ===== CLIQUE NA NOTA (seleção múltipla + ligar) ===== */
 
   el.addEventListener('click', e => {
+    // Shift+clique na nota: adiciona/remove da seleção múltipla
+    if (e.shiftKey && !linkMode) {
+      e.stopPropagation();
+      if (selectedNoteIds.has(note.id)) {
+        selectedNoteIds.delete(note.id);
+      } else {
+        selectedNoteIds.add(note.id);
+      }
+      updateMultiSelectHighlight();
+      return;
+    }
+
     if (!linkMode) return;
 
     if (e.target.tagName === 'TEXTAREA') return;
@@ -1317,16 +1515,26 @@ document.getElementById('addNote').addEventListener('click', () => createNote())
 let clipboardNote = null;
 
 function copyActiveNote() {
-  const note = state.notes.find(n => n.id === activeNoteId);
-  if (!note) return;
+  // Se há seleção múltipla, copia todas as notas selecionadas
+  const ids = selectedNoteIds.size > 0
+    ? [...selectedNoteIds]
+    : (activeNoteId != null ? [activeNoteId] : []);
+
+  if (!ids.length) return;
+
+  const notes = ids.map(id => state.notes.find(n => n.id === id)).filter(Boolean);
+  if (!notes.length) return;
+
+  // Ligações entre as notas copiadas (internas ao grupo)
+  const internalLinks = state.links.filter(l =>
+    ids.includes(l.a) && ids.includes(l.b)
+  );
 
   clipboardNote = {
-    text: note.text,
-    colorIndex: note.colorIndex,
-    width: note.width,
-    height: note.height,
-    x: note.x,
-    y: note.y
+    notes: notes.map(n => ({ ...n })),
+    links: internalLinks.map(l => ({ ...l })),
+    x: notes[0].x,
+    y: notes[0].y
   };
 }
 
@@ -1335,26 +1543,36 @@ function pasteNote() {
 
   pushUndoSnapshot();
 
-  const x = clipboardNote.x + 24;
-  const y = clipboardNote.y + 24;
+  const offset = 24;
+  const idMap = {};
 
-  const note = {
-    id: state.nextId++,
-    x, y,
-    text: clipboardNote.text,
-    colorIndex: clipboardNote.colorIndex,
-    pinned: false
-  };
+  clipboardNote.notes.forEach(src => {
+    const newId = state.nextId++;
+    idMap[src.id] = newId;
 
-  if (clipboardNote.width) note.width = clipboardNote.width;
-  if (clipboardNote.height) note.height = clipboardNote.height;
+    const newNote = {
+      ...src,
+      id: newId,
+      x: src.x + offset,
+      y: src.y + offset,
+      pinned: false
+    };
 
-  state.notes.push(note);
-  setActiveNote(note.id);
+    state.notes.push(newNote);
+    setActiveNote(newId);
+  });
 
-  // encadeia o deslocamento: colar de novo empilha a partir da última cópia
-  clipboardNote.x = x;
-  clipboardNote.y = y;
+  // Recria as ligações internas com os novos IDs
+  clipboardNote.links.forEach(l => {
+    const newA = idMap[l.a];
+    const newB = idMap[l.b];
+    if (newA && newB) {
+      state.links.push({ a: newA, b: newB, label: l.label || '' });
+    }
+  });
+
+  // Desloca a origem para o próximo Ctrl+V empilhar
+  clipboardNote.notes = clipboardNote.notes.map(n => ({ ...n, x: n.x + offset, y: n.y + offset }));
 
   save();
   render();
@@ -1429,24 +1647,38 @@ searchInput.addEventListener('keydown', e => {
 /* ===== EXPORTAR / IMPORTAR ===== */
 
 document.getElementById('exportNotes').addEventListener('click', () => {
-  const board = boards.find(b => b.id === currentBoardId);
+  // Salva o estado atual antes de exportar (garante dados frescos)
+  save();
+
+  // Coleta dados de todos os quadros
+  const allBoards = boards.map(b => {
+    const data = (b.id === currentBoardId)
+      ? state                      // quadro ativo: usa estado em memória
+      : loadBoardData(b.id);       // demais: lê do localStorage
+    return {
+      id:    b.id,
+      name:  b.name,
+      notes: data.notes,
+      links: data.links,
+      nextId: data.nextId
+    };
+  });
 
   const payload = {
-    board: board ? board.name : 'Quadro',
-    ...state
+    version: 2,                    // marca como exportação multi-quadro
+    exportedAt: new Date().toISOString(),
+    currentBoard: currentBoardId,
+    boards: allBoards
   };
 
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
   const stamp = new Date().toISOString().slice(0, 10);
-  const safeName = (board ? board.name : 'quadro').toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
-  a.href = url;
-  a.download = `notas-${safeName}-${stamp}.json`;
+  a.href     = url;
+  a.download = `notas-flutuantes-${stamp}.json`;
   a.click();
-
   URL.revokeObjectURL(url);
 });
 
@@ -1464,29 +1696,74 @@ importInput.addEventListener('change', () => {
     try {
       const parsed = JSON.parse(reader.result);
 
-      if (!parsed || !Array.isArray(parsed.notes)) {
-        throw new Error('Formato inválido');
+      // ── Formato v2: exportação de todos os quadros ──
+      if (parsed && parsed.version === 2 && Array.isArray(parsed.boards)) {
+        const totalNotes = parsed.boards.reduce((n, b) => n + (b.notes ? b.notes.length : 0), 0);
+        const totalBoards = parsed.boards.length;
+
+        const proceed = confirm(
+          `Importar ${totalBoards} quadro(s) com ${totalNotes} nota(s) no total.\n\n` +
+          `⚠️ Isso vai substituir TODOS os seus quadros atuais. Continuar?`
+        );
+        if (!proceed) return;
+
+        // Grava cada quadro no localStorage
+        const newBoards = parsed.boards.map(b => {
+          const id   = b.id || ('b' + Date.now() + Math.random().toString(36).slice(2));
+          const name = b.name || 'Quadro';
+          const data = {
+            notes:  Array.isArray(b.notes)  ? b.notes  : [],
+            links:  Array.isArray(b.links)  ? b.links  : [],
+            nextId: typeof b.nextId === 'number' ? b.nextId
+                      : (b.notes || []).reduce((m, n) => Math.max(m, n.id || 0), 0) + 1
+          };
+          localStorage.setItem(boardDataKey(id), JSON.stringify(data));
+          return { id, name };
+        });
+
+        // Substitui a lista de quadros
+        boards.length = 0;
+        newBoards.forEach(b => boards.push(b));
+        saveBoardsList();
+
+        // Muda para o quadro que estava ativo na exportação (ou o primeiro)
+        const target = parsed.currentBoard && boards.find(b => b.id === parsed.currentBoard)
+          ? parsed.currentBoard
+          : boards[0].id;
+
+        switchBoard(target);
+        alert(`✅ ${totalBoards} quadro(s) importado(s) com sucesso!`);
+
+      // ── Formato v1 / legado: exportação de um único quadro ──
+      } else if (parsed && Array.isArray(parsed.notes)) {
+        const proceed = state.notes.length === 0 ||
+          confirm('Importar vai substituir as notas do quadro atual. Continuar?');
+        if (!proceed) return;
+
+        pushUndoSnapshot();
+
+        state = {
+          notes:  parsed.notes,
+          links:  Array.isArray(parsed.links) ? parsed.links : [],
+          nextId: typeof parsed.nextId === 'number'
+            ? parsed.nextId
+            : parsed.notes.reduce((m, n) => Math.max(m, n.id), 0) + 1
+        };
+
+        // Se o JSON tinha nome de quadro, renomeia o quadro atual
+        if (parsed.board) {
+          const board = boards.find(b => b.id === currentBoardId);
+          if (board) { board.name = parsed.board; saveBoardsList(); renderBoardSelect(); }
+        }
+
+        activeNoteId = null;
+        save();
+        render();
+
+      } else {
+        throw new Error('Formato de arquivo não reconhecido.');
       }
 
-      const proceed = state.notes.length === 0 ||
-        confirm('Importar vai substituir as notas do quadro atual. Continuar?');
-
-      if (!proceed) return;
-
-      pushUndoSnapshot();
-
-      state = {
-        notes: parsed.notes,
-        links: Array.isArray(parsed.links) ? parsed.links : [],
-        nextId: typeof parsed.nextId === 'number'
-          ? parsed.nextId
-          : parsed.notes.reduce((m, n) => Math.max(m, n.id), 0) + 1
-      };
-
-      activeNoteId = null;
-
-      save();
-      render();
     } catch (err) {
       alert('Não foi possível importar esse arquivo: ' + err.message);
     } finally {
@@ -1571,11 +1848,35 @@ document.addEventListener('keydown', e => {
     return;
   }
 
+  const tag = document.activeElement && document.activeElement.tagName;
+  const inField = tag === 'TEXTAREA' || tag === 'INPUT' || tag === 'SELECT';
+
+  // Atalho L: ativar/desativar modo ligação (fora de campos de texto)
+  if (!inField && !e.ctrlKey && !e.metaKey && e.key.toLowerCase() === 'l') {
+    e.preventDefault();
+    linkBtn.click();
+    return;
+  }
+
+  // Delete / Backspace: apagar notas da seleção múltipla (fora de campos de texto)
+  if (!inField && (e.key === 'Delete' || e.key === 'Backspace')) {
+    if (selectedNoteIds.size > 0) {
+      e.preventDefault();
+      if (!confirm(`Apagar ${selectedNoteIds.size} nota(s) selecionada(s)?`)) return;
+      pushUndoSnapshot();
+      const ids = [...selectedNoteIds];
+      state.notes = state.notes.filter(n => !ids.includes(n.id));
+      state.links = state.links.filter(l => !ids.includes(l.a) && !ids.includes(l.b));
+      selectedNoteIds.clear();
+      save();
+      render();
+      return;
+    }
+  }
+
   const mod = e.ctrlKey || e.metaKey;
   if (!mod) return;
 
-  const tag = document.activeElement && document.activeElement.tagName;
-  const inField = tag === 'TEXTAREA' || tag === 'INPUT' || tag === 'SELECT';
   if (inField) return; // deixa o navegador cuidar de copiar/colar/desfazer texto normalmente
 
   const key = e.key.toLowerCase();
@@ -1738,14 +2039,20 @@ if (localStorage.getItem('dark-mode') === 'true') {
 darkBtn.addEventListener('click', () => {
   document.body.classList.toggle('dark');
   localStorage.setItem('dark-mode', document.body.classList.contains('dark'));
+  const isDarkNow = document.body.classList.contains('dark');
 
-  // Reaplica as cores de cada nota na variante certa (clara/escura)
+  // Reaplica cores de fundo/borda das notas
   document.querySelectorAll('.note').forEach(el => {
     const id = Number(el.dataset.id);
     const note = state.notes.find(n => n.id === id);
     const handle = el.querySelector('.handle');
-
     if (note && handle) applyNoteColor(el, handle, note.colorIndex || 0);
+
+    // Atualiza bolinhas de popup de cor que estiver aberto
+    el.querySelectorAll('.color-swatch').forEach((sw, i) => {
+      const c = NOTE_COLORS[i];
+      if (c) sw.style.background = isDarkNow ? c.dark.swatch : c.light.swatch;
+    });
   });
 });
 
@@ -1809,15 +2116,17 @@ function applyLocalLink() {
   const url = llpUrlInput.value.trim();
   if (!url) { closeLocalLinkPopup(); return; }
 
-  const ta = llpTargetTextarea;
-  const label = llpSelectedText || url;
+  const ta     = llpTargetTextarea;
   const before = ta.value.slice(0, llpSelStart);
   const after  = ta.value.slice(llpSelEnd);
-  const insertion = `[${label}](${url})`;
+
+  // Com texto selecionado → [texto](url) (markdown com rótulo)
+  // Sem texto           → (url)          (parêntese simples, sem colchetes)
+  const insertion = llpSelectedText
+    ? `[${llpSelectedText}](${url})`
+    : `(${url})`;
 
   ta.value = before + insertion + after;
-
-  // Dispara input para atualizar estado da nota
   ta.dispatchEvent(new Event('input', { bubbles: true }));
 
   const newPos = before.length + insertion.length;

@@ -309,29 +309,75 @@ body {
 
 .color-popup {
   position: absolute;
-  top: 22px;
+  top: 26px;
   right: 0;
   background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  padding: 6px;
-  display: flex;
+  border: 1px solid #d4cdb8;
+  border-radius: 8px;
+  padding: 7px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 5px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
   z-index: 50;
+  min-width: 118px;
 }
 
 .color-swatch {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.25);
+  border: 2px solid rgba(0, 0, 0, 0.15);
   cursor: pointer;
   padding: 0;
+  transition: transform 0.1s, box-shadow 0.1s;
 }
 
 .color-swatch:hover {
-  transform: scale(1.15);
+  transform: scale(1.22);
+  box-shadow: 0 2px 7px rgba(0,0,0,0.28);
+}
+
+.color-swatch.active-swatch {
+  border: 2.5px solid #fff;
+  box-shadow: 0 0 0 2.5px rgba(0,0,0,0.55);
+  transform: scale(1.1);
+}
+
+body.dark .color-popup {
+  background: #222;
+  border-color: #444;
+}
+
+body.dark .color-swatch {
+  border-color: rgba(255,255,255,0.18);
+}
+
+body.dark .color-swatch.active-swatch {
+  border-color: #111;
+  box-shadow: 0 0 0 2.5px rgba(255,255,255,0.55);
+}
+
+/* Seleção múltipla */
+
+#selection-rect {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  border: 2px dashed #ffb400;
+  background: rgba(255, 180, 0, 0.07);
+  display: none;
+  border-radius: 2px;
+}
+
+.note.multi-selected {
+  outline: 2.5px solid #ffb400 !important;
+  box-shadow: 0 0 0 4px rgba(255,180,0,0.18), 0 6px 16px rgba(0,0,0,0.12) !important;
+}
+
+body.dark .note.multi-selected {
+  outline: 2.5px solid #ffd866 !important;
+  box-shadow: 0 0 0 4px rgba(255,216,102,0.18) !important;
 }
 
 /* Calendário */
@@ -422,6 +468,29 @@ body {
   text-align: center;
 }
 
+/* ===== RETÂNGULO DE SELEÇÃO MÚLTIPLA ===== */
+
+#selection-rect {
+  position: fixed;
+  pointer-events: none;
+  z-index: 999;
+  border: 2px dashed #ffb400;
+  background: rgba(255, 180, 0, 0.07);
+  display: none;
+  border-radius: 2px;
+}
+
+/* Nota com seleção múltipla */
+.note.multi-selected {
+  outline: 2px solid #ffb400;
+  box-shadow: 0 0 0 4px rgba(255, 180, 0, 0.18), 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+body.dark .note.multi-selected {
+  outline: 2px solid #ffd866;
+  box-shadow: 0 0 0 4px rgba(255, 216, 102, 0.18);
+}
+
 /* ===== LINK OVERLAY — badges na base da nota ===== */
 
 .note-link-overlay {
@@ -436,8 +505,8 @@ body {
 .note-link-overlay .link-badge {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 2px 7px;
+  gap: 0;
+  padding: 0;
   border-radius: 10px;
   font-size: 11px;
   font-family: inherit;
@@ -445,17 +514,53 @@ body {
   color: #1a6fbf;
   border: 1px solid rgba(26, 111, 191, 0.25);
   text-decoration: none;
-  cursor: pointer;
   white-space: nowrap;
-  max-width: 180px;
+  max-width: 200px;
   overflow: hidden;
-  text-overflow: ellipsis;
   line-height: 1.4;
   transition: background 0.12s;
 }
 
+.note-link-overlay .link-badge-label {
+  padding: 2px 5px 2px 7px;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.note-link-overlay .link-badge-label:hover {
+  text-decoration: underline;
+}
+
+.note-link-overlay .link-badge-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-left: 1px solid rgba(26, 111, 191, 0.2);
+  color: #1a6fbf;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  line-height: 1;
+  padding: 0 5px;
+  height: 100%;
+  opacity: 0.55;
+  transition: opacity 0.12s, background 0.12s;
+  flex-shrink: 0;
+}
+
+.note-link-overlay .link-badge-remove:hover {
+  opacity: 1;
+  background: rgba(26, 111, 191, 0.15);
+}
+
 .note-link-overlay .link-badge:hover {
-  background: rgba(26, 111, 191, 0.2);
+  background: rgba(26, 111, 191, 0.15);
   text-decoration: none;
 }
 
@@ -465,8 +570,17 @@ body {
   border-color: rgba(122, 79, 190, 0.25);
 }
 
+.note-link-overlay .link-badge.local-link .link-badge-remove {
+  color: #7a4fbe;
+  border-left-color: rgba(122, 79, 190, 0.2);
+}
+
+.note-link-overlay .link-badge.local-link .link-badge-remove:hover {
+  background: rgba(122, 79, 190, 0.15);
+}
+
 .note-link-overlay .link-badge.local-link:hover {
-  background: rgba(122, 79, 190, 0.2);
+  background: rgba(122, 79, 190, 0.15);
 }
 
 /* dark mode */
@@ -477,7 +591,16 @@ body.dark .note-link-overlay .link-badge {
 }
 
 body.dark .note-link-overlay .link-badge:hover {
-  background: rgba(122, 184, 245, 0.22);
+  background: rgba(122, 184, 245, 0.2);
+}
+
+body.dark .note-link-overlay .link-badge-remove {
+  color: #7ab8f5;
+  border-left-color: rgba(122, 184, 245, 0.2);
+}
+
+body.dark .note-link-overlay .link-badge-remove:hover {
+  background: rgba(122, 184, 245, 0.2);
 }
 
 body.dark .note-link-overlay .link-badge.local-link {
@@ -487,7 +610,16 @@ body.dark .note-link-overlay .link-badge.local-link {
 }
 
 body.dark .note-link-overlay .link-badge.local-link:hover {
-  background: rgba(192, 157, 224, 0.22);
+  background: rgba(192, 157, 224, 0.2);
+}
+
+body.dark .note-link-overlay .link-badge.local-link .link-badge-remove {
+  color: #c09de0;
+  border-left-color: rgba(192, 157, 224, 0.2);
+}
+
+body.dark .note-link-overlay .link-badge.local-link .link-badge-remove:hover {
+  background: rgba(192, 157, 224, 0.2);
 }
 
 /* ===== VISUALIZADOR DE ARQUIVO ===== */
@@ -1020,11 +1152,6 @@ body.dark #viewport.drag-active::after {
 
 body.dark .note.active {
   box-shadow: 0 0 0 2px #666;
-}
-
-body.dark .color-popup {
-  background: #2a2a2a;
-  border-color: #444;
 }
 
 body.dark #calendar {

@@ -1,137 +1,232 @@
-# How to Use Floating Notes
+# Floating Notes — English
 
-## Opening the App
+## How to open
 
-No installation is required. Inside the folder, double-click **`index.html`** — it will open directly in your browser.
+No installation required. Inside the folder, double-click **`index.html`** — it opens directly in your browser.
 
-> If the page opens without styling or doesn't work properly, make sure all three files (`index.html`, `style.css`, and `script.js`) are in the **same folder**.
-
-## What You Can Do
-
-* **+ New Note** — creates a new note, or double-click anywhere on an empty space
-
-* **Drag** — click and hold the top bar of a note to move it
-
-* **Resize** — drag the bottom-right corner of a note
-
-* **Color** — click the palette icon inside a note to change its color
-
-* **Pin** — locks the note in place
-
-* **Connect** — connects two notes with a line (click one, then the other). Click the line afterward to give it a name
-
-* **Links** — add links to notes and open them directly in the app or in your browser. To turn selected text into a link, click the **🔗 Link** button on the note's top bar
-
-* **Local links and folders** — drag a folder from your file explorer onto the board to create a shortcut badge that opens that directory. You can also link to local files using the 🔗 Link button with a `file://` path
-
-* **Files** — drag a file onto the board to attach it to a note. Text files (`.txt`, `.md`, `.csv`, `.json`) appear fully editable inside the note and can be opened in a full editor by clicking 👁 View
-
-* **Edit text files** — when viewing a text file, you can edit it directly and click **💾 Save changes to note** to update the note's content
-
-* **Images** — add photos and other images to notes and view them directly inside the app
-
-* **Calendar** — inserts a date into the selected note
-
-* **Search** — type to find notes; press `Enter` to jump between results
-
-* **Zoom** — scroll the mouse wheel, or use the `-` / `+` buttons at the top
-
-* **Navigate the Board** — click and drag the empty background (text in notes won't be selected while panning)
-
-* **Boards** — use the dropdown menu at the top to have multiple separate note boards (e.g. one board for work and another for personal notes)
-
-* **Dark Mode** — switches between light and dark themes
-
-## Are Your Notes Saved?
-
-Yes, automatically — but only **in that browser, on that computer**. If you open the app in another browser or on another computer, it will start empty.
-
-To take your notes with you:
-
-1. Click **⬇ Export** — downloads a `.json` file containing everything
-
-2. On another browser or computer, open the app and click **⬆ Import**, then select that file
-
-> Links, files, and images added to your notes are also included in the exported data.
-
-## Deleting Everything
-
-The **🗑 Clear** button deletes all notes from the current board (a confirmation is required first).
-
-To delete an entire board, use the **🗑** button next to the board name at the top.
-
-## License
-
-This project is available under the MIT License.
-
-See the [LICENSE](LICENSE) file for more information.
+> If the page opens without styling or doesn't work, make sure `index.html`, `style.css`, and `script.js` are all in the **same folder**.
 
 ---
 
-# Como usar o Notas Flutuantes — Português
+## What you can do
 
-## Abrindo o app
+### Notes
+* **+ New Note** — creates a note in the visible area, or **double-click** any empty space on the board
+* **Drag** — click and hold the top bar to move a note. With multiple notes selected, dragging one moves all of them
+* **Resize** — drag the bottom-right corner of a note
+* **Color** — click 🎨 to choose from 6 colors (works with dark mode)
+* **Pin** 📌 — locks the note in place so it can't be accidentally moved or deleted
 
-Não precisa instalar nada. Dentro da pasta, dê duplo clique no arquivo **`index.html`** — ele abre direto no seu navegador.
+### Multi-selection
+* **Shift + drag the background** — draws a selection rectangle and selects all notes inside it
+* **Shift + click a note** — adds or removes that note from the current selection
+* **Drag** one of the selected notes — moves all selected notes together
+* **Delete** or **Backspace** — deletes all selected notes at once (confirmation required)
+* Clicking the background without Shift — clears the selection
 
-> Se ao abrir a página estiver sem estilo ou sem funcionar, confira se os três arquivos (`index.html`, `style.css`, `script.js`) estão todos na **mesma pasta**.
+### Note connections
+* **🔗 Connect** (or press **L**) — enters link mode. Click one note, then another to connect them with a line. Click the line to label it
+* To remove a connection, enter link mode and click the same two notes again
+* **Esc** — cancels link mode
+
+### Links and URLs
+* **🔗 Link button** on the note's top bar — opens a field to paste a URL or local path (`file://`)
+  * If text is selected in the note, it becomes the link label
+  * If no text is selected, the link appears only as a clickable badge
+* Links appear as **badges** at the bottom of the note. Each badge has a **×** button to remove the link without deleting the note text
+* **Click a badge** — opens the link in the built-in viewer
+* **Shift + click a badge** — opens in the browser
+* Local paths (e.g. `C:\Users\Desktop\file.pdf`) are shown in a shortened format in the badge
+
+### Files and images
+* **Drag a file** onto the board to attach it to a note
+* Text files (`.txt`, `.md`, `.csv`, `.json`) appear with their content fully editable inside the note
+* Click **👁 View** to open the file in a full editor; edit and click **💾 Save changes to note** to update
+* Images (`.jpg`, `.png`, etc.) appear directly inside the note
+* Drag a **folder** from Explorer/Finder to create a shortcut that opens that directory
+
+### Calendar 📅
+* Click 📅 in the toolbar to open the floating calendar
+* Click a day to insert the date into the active note
+
+### Search
+* Type in the search box — matching notes are highlighted
+* Press **Enter** to jump between results
+
+### Zoom and navigation
+* **Mouse scroll** — zoom centered on cursor
+* **−** / **+** and **⤾** buttons to control and reset zoom
+* **Click + drag the background** — pan the board
+
+### Copy and paste
+* **Ctrl+C** — copies the active note (or all selected notes), including color, size, and internal connections
+* **Ctrl+V** — pastes with a 24 px offset (paste multiple times to stack)
+
+### Undo / Redo
+* **Ctrl+Z** — undo last action
+* **Ctrl+Shift+Z** or **Ctrl+Y** — redo
+
+### Boards
+* Use the dropdown at the top to have multiple independent boards (e.g. work and personal)
+* **+ Board** — create a new board
+* **✎** — rename the current board
+* **🗑** — delete the entire board (confirmation required)
+
+### Dark mode 🌙
+* Toggles between light and dark theme. Preference is saved automatically.
+
+---
+
+## Keyboard shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `L` | Toggle connection mode |
+| `Delete` / `Backspace` | Delete selected notes |
+| `Ctrl+C` | Copy active / selected note(s) |
+| `Ctrl+V` | Paste copied note(s) |
+| `Ctrl+Z` | Undo |
+| `Ctrl+Shift+Z` / `Ctrl+Y` | Redo |
+| `Esc` | Cancel link mode / close panels |
+| `Shift+drag background` | Select multiple notes with a rectangle |
+| `Shift+click note` | Add / remove from selection |
+
+---
+
+## Are notes saved?
+
+Yes, automatically — but only **in that browser, on that computer**. In another browser or computer, the app starts empty.
+
+To take your notes with you:
+
+1. Click **⬇ Export** — downloads a single `.json` with **all your boards**, including names, notes, connections, images, and files
+2. On the destination, open the app and click **⬆ Import**, select the file — all boards are restored automatically
+
+> The app can also import files exported by older versions (single-board format).
+
+### Clearing everything
+The **🗑 Clear** button deletes all notes on the current board (confirmation required).
+
+---
+
+## License
+
+MIT License — see the `LICENSE` file for details.
+
+---
+
+# Notas Flutuantes
+
+## Como abrir
+
+Nenhuma instalação necessária. Dentro da pasta, dê duplo clique em **`index.html`** — ele abre direto no navegador.
+
+> Se a página abrir sem estilo ou sem funcionar, verifique se `index.html`, `style.css` e `script.js` estão todos na **mesma pasta**.
+
+---
 
 ## O que dá pra fazer
 
-* **+ Nova nota** — cria uma nota, ou dê duplo clique em qualquer espaço vazio
-
-* **Arrastar** — clique e segure a barra de cima da nota pra mover
-
+### Notas
+* **+ Nova nota** — cria uma nota na área visível, ou dê **duplo clique** em qualquer espaço vazio do quadro
+* **Arrastar** — clique e segure a barra superior da nota para mover. Com várias notas selecionadas, arrastar uma move todas juntas
 * **Redimensionar** — arraste o canto inferior direito da nota
+* **Cor** — clique no ícone 🎨 para escolher entre 6 cores (funciona com modo escuro)
+* **Fixar** 📌 — trava a nota no lugar; ela não pode ser arrastada nem apagada por acidente
 
-* **Cor** — clique no ícone de paleta dentro da nota pra trocar a cor
+### Seleção múltipla
+* **Shift + arrastar o fundo** — desenha um retângulo e seleciona todas as notas dentro dele
+* **Shift + clique numa nota** — adiciona ou remove a nota da seleção atual
+* **Arrastar** uma das notas selecionadas — move todas as notas da seleção juntas
+* **Delete** ou **Backspace** — apaga todas as notas selecionadas de uma vez (pede confirmação)
+* Clicar no fundo sem Shift — limpa a seleção
 
-* **Fixar** — trava a nota no lugar
+### Ligações entre notas
+* **🔗 Ligar** (ou tecla **L**) — ativa o modo ligação. Clique numa nota, depois em outra para conectá-las com uma linha. Clique na linha para dar um nome a ela
+* Para remover uma ligação, ative o modo Ligar e clique nas mesmas duas notas novamente
+* **Esc** — cancela o modo ligação
 
-* **Ligar** — conecta duas notas com uma linha (clique em uma, depois na outra). Clique na linha depois pra dar um nome a ela
+### Links e URLs
+* **Botão 🔗 Link** na barra da nota — abre um campo para colar um endereço (URL ou caminho local como `file://`)
+  * Se houver texto selecionado na nota, ele vira o rótulo do link
+  * Se não houver texto selecionado, o link aparece somente como um badge clicável
+* Os links aparecem como **badges** na parte inferior da nota. Cada badge tem um botão **×** para remover o link sem apagar o texto
+* **Clique no badge** — abre o link no visualizador interno
+* **Shift + clique no badge** — abre no navegador
+* Caminhos locais (ex.: `C:\Usuário\Desktop\Arquivo.pdf`) são formatados de forma abreviada no badge
 
-* **Links** — adicione links às notas e abra-os diretamente dentro do app ou no navegador. Para transformar um texto em link, selecione-o e clique no botão **🔗 Link** na barra superior da nota
+### Arquivos e imagens
+* **Arraste um arquivo** para o quadro para anexá-lo a uma nota
+* Arquivos de texto (`.txt`, `.md`, `.csv`, `.json`) aparecem com o conteúdo editável diretamente na nota
+* Clique em **👁 Ver** para abrir o arquivo num editor ampliado; edite e clique em **💾 Salvar alterações na nota** para atualizar
+* Imagens (`.jpg`, `.png` etc.) aparecem diretamente dentro da nota
+* Arraste uma **pasta** do Explorer/Finder para criar um atalho que abre aquele diretório
 
-* **Links locais e pastas** — arraste uma pasta do Explorer ou Finder direto no quadro para criar um atalho que abre aquele diretório. Você também pode criar links para arquivos locais pelo botão 🔗 Link usando um caminho `file://`
+### Calendário 📅
+* Clique em 📅 na barra superior para abrir o calendário flutuante
+* Clique em um dia para inserir a data na nota ativa
 
-* **Arquivos** — arraste um arquivo para o quadro para anexá-lo a uma nota. Arquivos de texto (`.txt`, `.md`, `.csv`, `.json`) aparecem completos e editáveis na nota, e podem ser abertos no editor completo clicando em 👁 Ver
+### Busca
+* Digite na caixa de busca — as notas que correspondem ficam destacadas
+* Pressione **Enter** para pular entre os resultados
 
-* **Editar arquivos de texto** — ao visualizar um arquivo de texto, você pode editar o conteúdo diretamente e clicar em **💾 Salvar alterações na nota** para atualizar a nota
+### Zoom e navegação
+* **Scroll do mouse** — zoom centrado no cursor
+* Botões **−** / **+** e **⤾** para controlar e redefinir o zoom
+* **Clique + arrastar o fundo** — navega pelo quadro (pan)
 
-* **Imagens** — adicione fotos e outras imagens às notas e visualize-as diretamente dentro do app
+### Copiar e colar
+* **Ctrl+C** — copia a nota ativa (ou todas as notas selecionadas), incluindo cor, tamanho e ligações internas ao grupo
+* **Ctrl+V** — cola as notas com um deslocamento de 24 px (colar várias vezes empilha)
 
-* **Calendário** — insere uma data dentro da nota selecionada
+### Desfazer / Refazer
+* **Ctrl+Z** — desfaz a última ação
+* **Ctrl+Shift+Z** ou **Ctrl+Y** — refaz
 
-* **Busca** — digite pra encontrar notas; aperte `Enter` pra pular entre os resultados
+### Quadros
+* Use o menu suspenso no topo para ter vários quadros independentes (ex.: trabalho e pessoal)
+* **+ Quadro** — cria um novo
+* **✎** — renomeia o quadro atual
+* **🗑** — apaga o quadro inteiro (pede confirmação)
 
-* **Zoom** — gire a rodinha do mouse, ou use os botões `-` / `+` no topo
+### Modo escuro 🌙
+* Alterna entre tema claro e escuro. A preferência é salva automaticamente.
 
-* **Navegar pelo quadro** — clique e arraste o fundo vazio (o texto das notas não é selecionado durante a navegação)
+---
 
-* **Quadros** — use o menu suspenso no topo pra ter várias "telas" de notas separadas (ex: um quadro pro trabalho, outro pessoal)
+## Atalhos de teclado
 
-* **Modo escuro** — alterna o tema
+| Atalho | Ação |
+|--------|------|
+| `L` | Ativar / desativar modo Ligação |
+| `Delete` / `Backspace` | Apagar notas selecionadas |
+| `Ctrl+C` | Copiar nota(s) ativa(s) / selecionadas |
+| `Ctrl+V` | Colar nota(s) copiadas |
+| `Ctrl+Z` | Desfazer |
+| `Ctrl+Shift+Z` / `Ctrl+Y` | Refazer |
+| `Esc` | Cancelar modo ligação / fechar painéis |
+| `Shift+arrastar fundo` | Selecionar múltiplas notas por retângulo |
+| `Shift+clique na nota` | Adicionar / remover da seleção |
 
-## Suas notas ficam salvas?
+---
 
-Sim, automaticamente — mas apenas **nesse navegador, nesse computador**. Se você abrir o app em outro navegador ou outro PC, ele começa vazio.
+## As notas ficam salvas?
 
-Pra levar suas notas com você:
+Sim, automaticamente — mas apenas **nesse navegador, nesse computador**. Em outro navegador ou computador, o app começa vazio.
 
-1. Clique em **⬇ Exportar** — baixa um arquivo `.json` com tudo
+Para levar suas notas:
 
-2. No outro navegador/computador, abra o app e clique em **⬆ Importar**, selecionando esse arquivo
+1. Clique em **⬇ Exportar** — baixa um único `.json` com **todos os seus quadros**, incluindo nomes, notas, ligações, imagens e arquivos
+2. No destino, abra o app e clique em **⬆ Importar**, selecione o arquivo — todos os quadros serão restaurados automaticamente
 
-> Links, arquivos e imagens adicionados às notas também são incluídos nos dados exportados.
+> O app também consegue importar arquivos exportados por versões antigas (de um único quadro).
 
-## Apagando tudo
+### Apagando tudo
+O botão **🗑 Limpar** apaga todas as notas do quadro atual (pede confirmação).
 
-O botão **🗑 Limpar** apaga todas as notas do quadro atual (pede confirmação antes).
-
-Pra apagar um quadro inteiro, use o **🗑** ao lado do nome do quadro no topo.
+---
 
 ## Licença
 
-Este projeto está disponível sob a licença MIT.
+MIT License — consulte o arquivo `LICENSE` para detalhes.
 
-Consulte o arquivo [LICENSE](LICENSE) para mais informações.
