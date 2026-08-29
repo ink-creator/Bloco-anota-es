@@ -14,14 +14,12 @@
     <button id="redoBtn" title="Refazer (Ctrl+Shift+Z ou Ctrl+Y)">↻ Refazer</button>
     <button id="linkMode" title="Ativar modo de ligar notas">🔗 Ligar</button>
     <button id="toggleCal" title="Mostrar/ocultar calendário">📅</button>
-    <button id="darkMode" title="Alternar modo escuro">🌙</button>
 
     <span class="sep"></span>
 
     <select id="boardSelect" title="Trocar de quadro"></select>
     <button id="addBoard" title="Novo quadro">+ Quadro</button>
     <button id="renameBoard" title="Renomear quadro">✎</button>
-    <button id="deleteBoard" title="Apagar quadro">🗑</button>
 
     <span class="sep"></span>
 
@@ -36,18 +34,37 @@
       <button id="zoomReset" title="Redefinir visualização">⤾</button>
     </div>
 
-    <span class="sep"></span>
-
-    <button id="exportNotes" title="Baixar backup geral em JSON">⬇ Exportar</button>
-    <button id="importNotes" title="Carregar backup em JSON">⬆ Importar</button>
-    <input type="file" id="importInput" accept="application/json" hidden />
-    <button id="clearAll" title="Apagar todas as notas do quadro atual">🗑 Limpar</button>
-
     <span id="stats"></span>
     <span id="saveIndicator" aria-live="polite">💾 Salvo</span>
+
+    <button id="settingsToggle" title="Configurações">⚙ Configurações</button>
   </div>
 
-  <div id="hint">Duplo clique no fundo cria uma nota · Shift+arraste seleciona várias notas · Shift+clique numa nota adiciona à seleção · Delete apaga selecionadas · L ativa modo ligação · Ctrl+C/V copia/cola nota(s) com ligações · Ctrl+Z desfaz · Esc cancela</div>
+  <div id="settingsPanel" class="hidden">
+    <div class="settings-header">
+      <span>⚙ Configurações</span>
+      <button id="settingsClose" title="Fechar" aria-label="Fechar">✕</button>
+    </div>
+
+    <div class="settings-section">
+      <h4>💾 Backup</h4>
+      <button id="exportNotes" title="Baixar backup com todos os quadros em JSON">⬇ Exportar tudo</button>
+      <button id="exportBoardNotes" title="Baixar backup apenas do quadro atual em JSON">⬇ Exportar quadro atual</button>
+      <button id="importNotes" title="Carregar backup em JSON">⬆ Importar backup</button>
+      <input type="file" id="importInput" accept="application/json" hidden />
+    </div>
+
+    <div class="settings-section">
+      <h4>🎨 Aparência</h4>
+      <button id="darkMode" title="Alternar modo escuro">🌙 Modo escuro</button>
+    </div>
+
+    <div class="settings-section settings-section--danger">
+      <h4>🗑 Apagar</h4>
+      <button id="clearAll" title="Apagar todas as notas do quadro atual">Limpar notas do quadro atual</button>
+      <button id="deleteBoard" title="Apagar o quadro atual inteiro">Apagar quadro atual</button>
+    </div>
+  </div>
 
   <div id="viewport">
     <div id="world">

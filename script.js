@@ -61,6 +61,7 @@ const NOTE_COLORS = [
 
 let linkMode = false;
 let linkPick = null;
+let moveMode = false;
 let activeNoteId = null;
 
 // Seleção múltipla
@@ -165,6 +166,7 @@ function switchBoard(id) {
   linkPick = null;
   linkMode = false;
   linkBtn.classList.remove('active');
+  setMoveMode(false);
   selectedNoteIds.clear();
 
   undoStack = [];
@@ -1090,18 +1092,36 @@ function renderNote(note) {
         // Recalcula posição do link no texto atual
         const allLinks = extractAllLinks(currentText);
         const target = allLinks.find(l => l.url === link.url && l.text === link.text);
+
         if (target) {
-          const before = currentText.slice(0, target.start);
-          const after  = currentText.slice(target.end);
-          ta.value = (before + after).replace(/\n{3,}/g, '\n\n');
+          // Mesmo problema/solução de applyLocalLink: seleciona o trecho e
+          // apaga via execCommand para manter o desfazer nativo do textarea
+          // (atribuir ta.value direto apagaria esse histórico).
+          ta.focus();
+          ta.setSelectionRange(target.start, target.end);
+          const ok = document.execCommand('delete', false, null);
+
+          if (ok) {
+            // Colapsa 3+ quebras de linha deixadas pela remoção, se houver
+            const run = /\n{3,}/.exec(ta.value);
+            if (run) {
+              ta.setSelectionRange(run.index, run.index + run[0].length);
+              document.execCommand('insertText', false, '\n\n');
+            }
+          } else {
+            const before = currentText.slice(0, target.start);
+            const after  = currentText.slice(target.end);
+            ta.value = (before + after).replace(/\n{3,}/g, '\n\n');
+            note.text = ta.value;
+            ta.dispatchEvent(new Event('input', { bubbles: true }));
+          }
         } else {
           // Fallback: remove qualquer ocorrência do padrão com essa URL
           const escaped = link.url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
           ta.value = currentText.replace(new RegExp(`\\[[^\\]]*\\]\\(${escaped}\\)`, 'g'), '').replace(/\n{3,}/g, '\n\n');
+          note.text = ta.value;
+          ta.dispatchEvent(new Event('input', { bubbles: true }));
         }
-
-        note.text = ta.value;
-        ta.dispatchEvent(new Event('input', { bubbles: true }));
       });
 
       badge.appendChild(mainSpan);
@@ -1774,6 +1794,74 @@ importInput.addEventListener('change', () => {
   reader.readAsText(file);
 });
 
+/* ===== BACKUP DE UM QUADRO SÓ ===== */
+
+document.getElementById('exportBoardNotes').addEventListener('click', () => {
+  save();
+
+  const board = boards.find(b => b.id === currentBoardId);
+  const boardName = board ? board.name : 'Quadro';
+
+  // Mesmo formato (v1/legado) que o Importar já sabe ler para um quadro só
+  const payload = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    board: boardName,
+    notes: state.notes,
+    links: state.links,
+    nextId: state.nextId
+  };
+
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0, 10);
+
+  const slug = boardName
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'quadro';
+
+  a.href     = url;
+  a.download = `notas-flutuantes-${slug}-${stamp}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+/* ===== PAINEL DE CONFIGURAÇÕES ===== */
+
+const settingsPanel  = document.getElementById('settingsPanel');
+const settingsToggle = document.getElementById('settingsToggle');
+const settingsClose  = document.getElementById('settingsClose');
+
+function openSettings() {
+  closeCalendar();
+  settingsPanel.classList.remove('hidden');
+  settingsToggle.classList.add('active');
+}
+
+function closeSettings() {
+  settingsPanel.classList.add('hidden');
+  settingsToggle.classList.remove('active');
+}
+
+function toggleSettingsPanel() {
+  settingsPanel.classList.contains('hidden') ? openSettings() : closeSettings();
+}
+
+settingsToggle.addEventListener('click', toggleSettingsPanel);
+settingsClose.addEventListener('click', closeSettings);
+
+// Fecha ao clicar fora do painel
+document.addEventListener('mousedown', e => {
+  if (settingsPanel.classList.contains('hidden')) return;
+  if (settingsPanel.contains(e.target)) return;
+  if (settingsToggle.contains(e.target)) return;
+
+  closeSettings();
+});
+
 /* ===== DESFAZER / REFAZER ===== */
 
 let undoStack = [];
@@ -1827,6 +1915,44 @@ function redo() {
 undoBtn.addEventListener('click', undo);
 redoBtn.addEventListener('click', redo);
 
+/* ===== MOVER COM TECLADO (M) ===== */
+
+const MOVE_STEP = 10;
+const MOVE_STEP_FAST = 40;
+
+function setMoveMode(on) {
+  moveMode = on;
+  document.body.classList.toggle('move-mode', moveMode);
+}
+
+// Nota(s)-alvo do modo mover: a seleção múltipla, senão a nota ativa
+function moveTargets() {
+  const ids = selectedNoteIds.size > 0
+    ? [...selectedNoteIds]
+    : (activeNoteId != null ? [activeNoteId] : []);
+
+  return state.notes.filter(n => ids.includes(n.id) && !n.pinned);
+}
+
+function nudgeNotes(dx, dy) {
+  const targets = moveTargets();
+  if (!targets.length) return false;
+
+  targets.forEach(n => {
+    n.x += dx;
+    n.y += dy;
+    const el = canvas.querySelector(`.note[data-id="${n.id}"]`);
+    if (el) {
+      el.style.left = n.x + 'px';
+      el.style.top  = n.y + 'px';
+    }
+  });
+
+  drawLinks();
+  save();
+  return true;
+}
+
 /* ===== ATALHOS DE TECLADO ===== */
 
 document.addEventListener('keydown', e => {
@@ -1843,8 +1969,11 @@ document.addEventListener('keydown', e => {
       linkBtn.classList.remove('active');
     }
 
+    if (moveMode) setMoveMode(false);
+
     closeAllColorPopups();
     closeCalendar();
+    closeSettings();
     return;
   }
 
@@ -1855,6 +1984,29 @@ document.addEventListener('keydown', e => {
   if (!inField && !e.ctrlKey && !e.metaKey && e.key.toLowerCase() === 'l') {
     e.preventDefault();
     linkBtn.click();
+    return;
+  }
+
+  // Atalho M: ativar/desativar modo mover (fora de campos de texto).
+  // Com o modo ativo, as setas do teclado deslocam a nota ativa (ou toda
+  // a seleção múltipla); Shift+seta desloca mais rápido.
+  if (!inField && !e.ctrlKey && !e.metaKey && e.key.toLowerCase() === 'm') {
+    e.preventDefault();
+    if (!moveMode && !moveTargets().length) return; // nada selecionado/ativo pra mover
+    if (!moveMode) pushUndoSnapshot();
+    setMoveMode(!moveMode);
+    return;
+  }
+
+  if (!inField && moveMode && e.key.startsWith('Arrow')) {
+    e.preventDefault();
+    const step = e.shiftKey ? MOVE_STEP_FAST : MOVE_STEP;
+    const moved =
+      e.key === 'ArrowUp'    ? nudgeNotes(0, -step) :
+      e.key === 'ArrowDown'  ? nudgeNotes(0, step) :
+      e.key === 'ArrowLeft'  ? nudgeNotes(-step, 0) :
+      e.key === 'ArrowRight' ? nudgeNotes(step, 0) : false;
+    if (!moved) setMoveMode(false); // nota-alvo sumiu (ex.: desfazer) — sai do modo
     return;
   }
 
@@ -1918,6 +2070,7 @@ const MESES = [
 const DOW = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
 function openCalendar() {
+  closeSettings();
   calEl.classList.remove('hidden');
   calToggle.classList.add('active');
   renderCalendar();
@@ -2016,13 +2169,20 @@ function insertDateIntoActiveNote(y, m, d) {
     const insert =
       (before && !before.endsWith(' ') && !before.endsWith('\n') ? ' ' : '') + `📅 ${dateStr} `;
 
-    el.value = before + insert + after;
-    note.text = el.value;
-
     el.focus();
+    el.setSelectionRange(start, end);
 
-    const pos = (before + insert).length;
-    el.setSelectionRange(pos, pos);
+    // Mesmo problema/solução de applyLocalLink: execCommand preserva o
+    // desfazer nativo do textarea; atribuir .value direto o apaga.
+    const ok = document.execCommand('insertText', false, insert);
+
+    if (!ok) {
+      el.value = before + insert + after;
+      note.text = el.value;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      const pos = (before + insert).length;
+      el.setSelectionRange(pos, pos);
+    }
 
     save();
   }
@@ -2116,9 +2276,7 @@ function applyLocalLink() {
   const url = llpUrlInput.value.trim();
   if (!url) { closeLocalLinkPopup(); return; }
 
-  const ta     = llpTargetTextarea;
-  const before = ta.value.slice(0, llpSelStart);
-  const after  = ta.value.slice(llpSelEnd);
+  const ta = llpTargetTextarea;
 
   // Com texto selecionado → [texto](url) (markdown com rótulo)
   // Sem texto           → (url)          (parêntese simples, sem colchetes)
@@ -2126,12 +2284,24 @@ function applyLocalLink() {
     ? `[${llpSelectedText}](${url})`
     : `(${url})`;
 
-  ta.value = before + insertion + after;
-  ta.dispatchEvent(new Event('input', { bubbles: true }));
-
-  const newPos = before.length + insertion.length;
-  ta.setSelectionRange(newPos, newPos);
   ta.focus();
+  ta.setSelectionRange(llpSelStart, llpSelEnd);
+
+  // execCommand insere pelo mesmo caminho de uma digitação normal, então
+  // mantém o histórico nativo de desfazer do textarea. Atribuir ta.value
+  // diretamente apaga esse histórico — por isso o Ctrl+Z não desfazia o
+  // link (mas desfazia uma edição de texto normal).
+  const ok = document.execCommand('insertText', false, insertion);
+
+  if (!ok) {
+    // Navegador sem suporte a execCommand: aplica sem preservar o undo nativo
+    const before = ta.value.slice(0, llpSelStart);
+    const after  = ta.value.slice(llpSelEnd);
+    ta.value = before + insertion + after;
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+    const newPos = before.length + insertion.length;
+    ta.setSelectionRange(newPos, newPos);
+  }
 
   closeLocalLinkPopup();
 }
