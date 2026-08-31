@@ -8,7 +8,7 @@
 A browser-based visual notes board for organizing ideas using **floating notes, connections, files, multiple boards and an infinite workspace**.
 
 <p align="center">
-  <a href="https://ink-creator.github.io/Bloco-anota-es/">
+  <a href="https://ink-creator.github.io/Notas-flutuantes/">
     <img src="https://img.shields.io/badge/Open-Live%20Demo-2ea44f?style=for-the-badge" alt="Live Demo">
   </a>
 </p>
@@ -307,7 +307,7 @@ Older single-board backup formats are also supported.
 
 The complete application can be used directly through GitHub Pages:
 
-**https://ink-creator.github.io/Bloco-anota-es/**
+**https://ink-creator.github.io/Notas-flutuantes/**
 
 No installation is required.
 
@@ -318,7 +318,7 @@ No installation is required.
 Clone the repository:
 
 ```bash
-git clone https://github.com/ink-creator/Bloco-anota-es.git
+git clone https://ink-creator.github/Notas-flutuantes/.git
 ```
 
 Or download it as a ZIP.
@@ -358,7 +358,7 @@ No frameworks, backend or external dependencies are required.
 ## Project Structure
 
 ```text
-Bloco-anota-es/
+Notas-flutuantes/
 ├── assets/
 │   └── screenshots/
 │       ├── light-overview.png
@@ -631,7 +631,7 @@ Arquivos exportados por versões antigas com apenas um quadro também podem ser 
 
 A aplicação completa pode ser utilizada diretamente pelo GitHub Pages:
 
-**https://ink-creator.github.io/Bloco-anota-es/**
+**https://ink-creator.github.io/Notas-flutuantes//**
 
 Nenhuma instalação é necessária.
 
@@ -642,7 +642,7 @@ Nenhuma instalação é necessária.
 Clone o repositório:
 
 ```bash
-git clone https://github.com/ink-creator/Bloco-anota-es.git
+git clone https://github.com/ink-creator/Notas-flutuantes.git
 ```
 
 Ou baixe o projeto como ZIP.
@@ -684,7 +684,7 @@ O projeto não depende de frameworks, backend ou bibliotecas externas.
 ## Estrutura do Projeto
 
 ```text
-Bloco-anota-es/
+Notas-flutuantes/
 ├── assets/
 │   └── screenshots/
 │       ├── light-overview.png
