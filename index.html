@@ -42,12 +42,12 @@
 
   <div id="settingsPanel" class="hidden">
     <div class="settings-header">
-      <span>⚙ Configurações</span>
+      <span id="settingsHeaderText">⚙ Configurações</span>
       <button id="settingsClose" title="Fechar" aria-label="Fechar">✕</button>
     </div>
 
     <div class="settings-section">
-      <h4>💾 Backup</h4>
+      <h4 id="backupHeading">💾 Backup</h4>
       <button id="exportNotes" title="Baixar backup com todos os quadros em JSON">⬇ Exportar tudo</button>
       <button id="exportBoardNotes" title="Baixar backup apenas do quadro atual em JSON">⬇ Exportar quadro atual</button>
       <button id="importNotes" title="Carregar backup em JSON">⬆ Importar backup</button>
@@ -55,12 +55,21 @@
     </div>
 
     <div class="settings-section">
-      <h4>🎨 Aparência</h4>
+      <h4 id="appearanceHeading">🎨 Aparência</h4>
       <button id="darkMode" title="Alternar modo escuro">🌙 Modo escuro</button>
     </div>
 
+    <div class="settings-section">
+      <h4 id="languageHeading">🌐 Idioma</h4>
+      <label class="settings-label" id="languageLabel" for="languageSelect">Idioma da interface</label>
+      <select id="languageSelect" title="Escolher idioma">
+        <option value="pt-BR">Português (Brasil)</option>
+        <option value="en">English</option>
+      </select>
+    </div>
+
     <div class="settings-section settings-section--danger">
-      <h4>🗑 Apagar</h4>
+      <h4 id="deleteHeading">🗑 Apagar</h4>
       <button id="clearAll" title="Apagar todas as notas do quadro atual">Limpar notas do quadro atual</button>
       <button id="deleteBoard" title="Apagar o quadro atual inteiro">Apagar quadro atual</button>
     </div>
@@ -81,7 +90,7 @@
     </div>
 
     <div class="cal-grid" id="calGrid"></div>
-    <div class="cal-foot">Clique em um dia para inserir na nota ativa</div>
+    <div class="cal-foot" id="calFoot">Clique em um dia para inserir na nota ativa</div>
   </div>
 
   <!-- Popup de criação de link local (aparece sobre a nota) -->

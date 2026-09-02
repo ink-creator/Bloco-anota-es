@@ -567,6 +567,27 @@ body.dark .note.multi-selected {
   background: #ffe4e4;
 }
 
+
+.settings-label {
+  display: block;
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: #666;
+}
+
+.settings-section select {
+  display: block;
+  width: 100%;
+  border: 1px solid #d4cdb8;
+  background: #faf7ef;
+  color: #333;
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
 /* ===== RETÂNGULO DE SELEÇÃO MÚLTIPLA ===== */
 
 #selection-rect {
@@ -1294,6 +1315,17 @@ body.dark .settings-section button {
 
 body.dark .settings-section button:hover {
   background: #333;
+}
+
+
+body.dark .settings-label {
+  color: #aaa;
+}
+
+body.dark .settings-section select {
+  background: #2a2a2a;
+  border-color: #444;
+  color: #eee;
 }
 
 body.dark .settings-section--danger button {

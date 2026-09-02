@@ -8,6 +8,297 @@ const LEGACY_KEY = 'notas-flutuantes';
 const BOARDS_KEY = 'notas-flutuantes:boards';
 const CURRENT_BOARD_KEY = 'notas-flutuantes:current-board';
 
+const LANGUAGE_KEY = 'notas-flutuantes:language';
+
+const TRANSLATIONS = {
+  'pt-BR': {
+    documentTitle: 'Notas Flutuantes',
+    metaDescription: 'App de notas flutuantes com quadros, ligações entre notas, busca, zoom e calendário.',
+    addNote: '+ Nova nota',
+    addNoteTitle: 'Criar uma nova nota',
+    undo: '↺ Desfazer',
+    undoTitle: 'Desfazer (Ctrl+Z)',
+    redo: '↻ Refazer',
+    redoTitle: 'Refazer (Ctrl+Shift+Z ou Ctrl+Y)',
+    linkMode: '🔗 Ligar',
+    linkModeTitle: 'Ativar modo de ligar notas',
+    calendarTitle: 'Mostrar/ocultar calendário',
+    boardSelectTitle: 'Trocar de quadro',
+    addBoard: '+ Quadro',
+    addBoardTitle: 'Novo quadro',
+    renameBoardTitle: 'Renomear quadro',
+    searchPlaceholder: 'Buscar nas notas... (Enter navega)',
+    zoomOutTitle: 'Diminuir zoom',
+    zoomInTitle: 'Aumentar zoom',
+    zoomResetTitle: 'Redefinir visualização',
+    saved: '💾 Salvo',
+    saveError: '⚠ Erro ao salvar',
+    settings: '⚙ Configurações',
+    settingsTitle: 'Configurações',
+    close: 'Fechar',
+    backup: '💾 Backup',
+    exportAll: '⬇ Exportar tudo',
+    exportAllTitle: 'Baixar backup com todos os quadros em JSON',
+    exportBoard: '⬇ Exportar quadro atual',
+    exportBoardTitle: 'Baixar backup apenas do quadro atual em JSON',
+    importBackup: '⬆ Importar backup',
+    importBackupTitle: 'Carregar backup em JSON',
+    appearance: '🎨 Aparência',
+    darkMode: '🌙 Modo escuro',
+    darkModeTitle: 'Alternar modo escuro',
+    language: '🌐 Idioma',
+    languageLabel: 'Idioma da interface',
+    languageTitle: 'Escolher idioma',
+    languagePt: 'Português (Brasil)',
+    languageEn: 'English',
+    delete: '🗑 Apagar',
+    clearBoard: 'Limpar notas do quadro atual',
+    clearBoardTitle: 'Apagar todas as notas do quadro atual',
+    deleteBoard: 'Apagar quadro atual',
+    deleteBoardTitle: 'Apagar o quadro atual inteiro',
+    previousMonth: 'Mês anterior',
+    nextMonth: 'Próximo mês',
+    calendarFoot: 'Clique em um dia para inserir na nota ativa',
+    createLink: '🔗 Criar link',
+    linkPlaceholder: 'Cole uma URL ou caminho local...',
+    insertLink: 'Inserir link',
+    cancel: 'Cancelar',
+    file: 'Arquivo',
+    fileLower: 'arquivo',
+    closeEsc: '✕ Fechar',
+    closeEscTitle: 'Fechar (Esc)',
+    defaultBoard: ({ n }) => `Quadro ${n}`,
+    boardFallback: 'Quadro',
+    newBoardPrompt: 'Nome do novo quadro:',
+    renameBoardPrompt: 'Renomear quadro:',
+    cannotDeleteLastBoard: 'Não é possível apagar o último quadro.',
+    confirmDeleteBoard: ({ name }) => `Apagar o quadro "${name}" e todas as suas notas?`,
+    previewUnavailable: 'Pré-visualização não disponível.',
+    previewUnavailableType: 'Pré-visualização não disponível para este tipo de arquivo.',
+    saveChanges: '💾 Salvar alterações na nota',
+    discard: 'Descartar',
+    editHint: 'Edite o texto acima e salve para atualizar a nota',
+    savedShort: '✅ Salvo!',
+    downloadFile: 'Baixar arquivo',
+    siteCannotEmbed: 'Este site não permite ser exibido aqui.',
+    openNewTab: 'Abrir em nova aba ↗',
+    imageTooLarge: ({ name }) => `📎 ${name} (imagem grande demais pra importar)`,
+    textFileTooLarge: ({ name }) => `📎 ${name} (arquivo grande demais pra importar o conteúdo)`,
+    pdfTooLarge: ({ name }) => `📄 ${name} (PDF grande demais pra importar)`,
+    dragExplorerToOpen: 'Arraste do Explorer para abrir',
+    folder: 'Pasta',
+    stats: ({ notes, links }) => `${notes} nota${notes === 1 ? '' : 's'} · ${links} ligaç${links === 1 ? 'ão' : 'ões'}`,
+    view: 'Ver',
+    pinNote: 'Fixar nota',
+    unpinNote: 'Desafixar nota',
+    noteColor: 'Cor da nota',
+    insertDate: 'Inserir data',
+    makeLink: 'Transformar texto selecionado em link',
+    linkButton: '🔗 Link',
+    openLink: 'Abrir link (Shift+clique abre no navegador)',
+    deleteNote: 'Apagar',
+    notePlaceholder: 'Escreva algo...',
+    removeLink: 'Remover link',
+    linkLabelPrompt: 'Rótulo da ligação:',
+    colorNumber: ({ n }) => `Cor ${n}`,
+    colors: ['Amarelo', 'Laranja', 'Vermelho', 'Rosa claro', 'Rosa escuro', 'Roxo', 'Azul', 'Ciano', 'Verde claro', 'Verde escuro', 'Marrom', 'Cinza'],
+    confirmClearBoard: 'Apagar todas as notas deste quadro?',
+    importAllConfirm: ({ boards, notes }) => `Importar ${boards} quadro(s) com ${notes} nota(s) no total.\n\n⚠️ Isso vai substituir TODOS os seus quadros atuais. Continuar?`,
+    importSuccess: ({ boards }) => `✅ ${boards} quadro(s) importado(s) com sucesso!`,
+    importBoardConfirm: 'Importar vai substituir as notas do quadro atual. Continuar?',
+    unrecognizedFileFormat: 'Formato de arquivo não reconhecido.',
+    importError: ({ message }) => `Não foi possível importar esse arquivo: ${message}`,
+    confirmDeleteSelected: ({ count }) => `Apagar ${count} nota(s) selecionada(s)?`,
+    months: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
+    dow: ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
+  },
+  en: {
+    documentTitle: 'Floating Notes',
+    metaDescription: 'Floating notes app with boards, links between notes, search, zoom, and calendar.',
+    addNote: '+ New note',
+    addNoteTitle: 'Create a new note',
+    undo: '↺ Undo',
+    undoTitle: 'Undo (Ctrl+Z)',
+    redo: '↻ Redo',
+    redoTitle: 'Redo (Ctrl+Shift+Z or Ctrl+Y)',
+    linkMode: '🔗 Link',
+    linkModeTitle: 'Enable note linking mode',
+    calendarTitle: 'Show/hide calendar',
+    boardSelectTitle: 'Switch board',
+    addBoard: '+ Board',
+    addBoardTitle: 'New board',
+    renameBoardTitle: 'Rename board',
+    searchPlaceholder: 'Search notes... (Enter to navigate)',
+    zoomOutTitle: 'Zoom out',
+    zoomInTitle: 'Zoom in',
+    zoomResetTitle: 'Reset view',
+    saved: '💾 Saved',
+    saveError: '⚠ Save error',
+    settings: '⚙ Settings',
+    settingsTitle: 'Settings',
+    close: 'Close',
+    backup: '💾 Backup',
+    exportAll: '⬇ Export all',
+    exportAllTitle: 'Download a JSON backup with all boards',
+    exportBoard: '⬇ Export current board',
+    exportBoardTitle: 'Download a JSON backup of the current board only',
+    importBackup: '⬆ Import backup',
+    importBackupTitle: 'Load a JSON backup',
+    appearance: '🎨 Appearance',
+    darkMode: '🌙 Dark mode',
+    darkModeTitle: 'Toggle dark mode',
+    language: '🌐 Language',
+    languageLabel: 'Interface language',
+    languageTitle: 'Choose language',
+    languagePt: 'Português (Brasil)',
+    languageEn: 'English',
+    delete: '🗑 Delete',
+    clearBoard: 'Clear notes from current board',
+    clearBoardTitle: 'Delete all notes from the current board',
+    deleteBoard: 'Delete current board',
+    deleteBoardTitle: 'Delete the entire current board',
+    previousMonth: 'Previous month',
+    nextMonth: 'Next month',
+    calendarFoot: 'Click a day to insert it into the active note',
+    createLink: '🔗 Create link',
+    linkPlaceholder: 'Paste a URL or local path...',
+    insertLink: 'Insert link',
+    cancel: 'Cancel',
+    file: 'File',
+    fileLower: 'file',
+    closeEsc: '✕ Close',
+    closeEscTitle: 'Close (Esc)',
+    defaultBoard: ({ n }) => `Board ${n}`,
+    boardFallback: 'Board',
+    newBoardPrompt: 'New board name:',
+    renameBoardPrompt: 'Rename board:',
+    cannotDeleteLastBoard: 'You cannot delete the last board.',
+    confirmDeleteBoard: ({ name }) => `Delete the board "${name}" and all its notes?`,
+    previewUnavailable: 'Preview unavailable.',
+    previewUnavailableType: 'Preview unavailable for this file type.',
+    saveChanges: '💾 Save changes to note',
+    discard: 'Discard',
+    editHint: 'Edit the text above and save to update the note',
+    savedShort: '✅ Saved!',
+    downloadFile: 'Download file',
+    siteCannotEmbed: 'This site cannot be displayed here.',
+    openNewTab: 'Open in new tab ↗',
+    imageTooLarge: ({ name }) => `📎 ${name} (image is too large to import)`,
+    textFileTooLarge: ({ name }) => `📎 ${name} (file is too large to import its contents)`,
+    pdfTooLarge: ({ name }) => `📄 ${name} (PDF is too large to import)`,
+    dragExplorerToOpen: 'Drag from File Explorer to open',
+    folder: 'Folder',
+    stats: ({ notes, links }) => `${notes} note${notes === 1 ? '' : 's'} · ${links} link${links === 1 ? '' : 's'}`,
+    view: 'View',
+    pinNote: 'Pin note',
+    unpinNote: 'Unpin note',
+    noteColor: 'Note color',
+    insertDate: 'Insert date',
+    makeLink: 'Turn selected text into a link',
+    linkButton: '🔗 Link',
+    openLink: 'Open link (Shift+click opens in browser)',
+    deleteNote: 'Delete',
+    notePlaceholder: 'Write something...',
+    removeLink: 'Remove link',
+    linkLabelPrompt: 'Link label:',
+    colorNumber: ({ n }) => `Color ${n}`,
+    colors: ['Yellow', 'Orange', 'Red', 'Light pink', 'Dark pink', 'Purple', 'Blue', 'Cyan', 'Light green', 'Dark green', 'Brown', 'Gray'],
+    confirmClearBoard: 'Delete all notes from this board?',
+    importAllConfirm: ({ boards, notes }) => `Import ${boards} board(s) with ${notes} note(s) total.\n\n⚠️ This will replace ALL your current boards. Continue?`,
+    importSuccess: ({ boards }) => `✅ ${boards} board(s) imported successfully!`,
+    importBoardConfirm: 'Importing will replace the notes on the current board. Continue?',
+    unrecognizedFileFormat: 'Unrecognized file format.',
+    importError: ({ message }) => `Could not import this file: ${message}`,
+    confirmDeleteSelected: ({ count }) => `Delete ${count} selected note(s)?`,
+    months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+    dow: ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+  }
+};
+
+let currentLanguage = localStorage.getItem(LANGUAGE_KEY);
+if (!TRANSLATIONS[currentLanguage]) currentLanguage = 'pt-BR';
+
+function t(key, params = {}) {
+  const value = TRANSLATIONS[currentLanguage][key] ?? TRANSLATIONS['pt-BR'][key] ?? key;
+  if (typeof value === 'function') return value(params);
+  if (typeof value === 'string') {
+    return value.replace(/\{(\w+)\}/g, (_, name) => params[name] ?? `{${name}}`);
+  }
+  return value;
+}
+
+function setText(id, key) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = t(key);
+}
+
+function setAttr(id, attr, key) {
+  const el = document.getElementById(id);
+  if (el) el.setAttribute(attr, t(key));
+}
+
+function applyStaticTranslations() {
+  document.documentElement.lang = currentLanguage === 'en' ? 'en' : 'pt-BR';
+  document.title = t('documentTitle');
+  const meta = document.querySelector('meta[name="description"]');
+  if (meta) meta.setAttribute('content', t('metaDescription'));
+
+  setText('addNote', 'addNote'); setAttr('addNote', 'title', 'addNoteTitle');
+  setText('undoBtn', 'undo'); setAttr('undoBtn', 'title', 'undoTitle');
+  setText('redoBtn', 'redo'); setAttr('redoBtn', 'title', 'redoTitle');
+  setText('linkMode', 'linkMode'); setAttr('linkMode', 'title', 'linkModeTitle');
+  setAttr('toggleCal', 'title', 'calendarTitle');
+  setAttr('boardSelect', 'title', 'boardSelectTitle');
+  setText('addBoard', 'addBoard'); setAttr('addBoard', 'title', 'addBoardTitle');
+  setAttr('renameBoard', 'title', 'renameBoardTitle');
+  setAttr('searchInput', 'placeholder', 'searchPlaceholder');
+  setAttr('zoomOut', 'title', 'zoomOutTitle');
+  setAttr('zoomIn', 'title', 'zoomInTitle');
+  setAttr('zoomReset', 'title', 'zoomResetTitle');
+  setText('settingsToggle', 'settings'); setAttr('settingsToggle', 'title', 'settingsTitle');
+  setText('settingsHeaderText', 'settings');
+  setAttr('settingsClose', 'title', 'close'); setAttr('settingsClose', 'aria-label', 'close');
+  setText('backupHeading', 'backup');
+  setText('exportNotes', 'exportAll'); setAttr('exportNotes', 'title', 'exportAllTitle');
+  setText('exportBoardNotes', 'exportBoard'); setAttr('exportBoardNotes', 'title', 'exportBoardTitle');
+  setText('importNotes', 'importBackup'); setAttr('importNotes', 'title', 'importBackupTitle');
+  setText('appearanceHeading', 'appearance');
+  setText('darkMode', 'darkMode'); setAttr('darkMode', 'title', 'darkModeTitle');
+  setText('languageHeading', 'language'); setText('languageLabel', 'languageLabel'); setAttr('languageSelect', 'title', 'languageTitle');
+  setText('deleteHeading', 'delete');
+  setText('clearAll', 'clearBoard'); setAttr('clearAll', 'title', 'clearBoardTitle');
+  setText('deleteBoard', 'deleteBoard'); setAttr('deleteBoard', 'title', 'deleteBoardTitle');
+  setAttr('calPrev', 'aria-label', 'previousMonth'); setAttr('calNext', 'aria-label', 'nextMonth');
+  setText('calFoot', 'calendarFoot');
+  setText('llp-label', 'createLink'); setAttr('llp-url-input', 'placeholder', 'linkPlaceholder');
+  setText('llp-confirm', 'insertLink'); setText('llp-cancel', 'cancel');
+  setText('file-viewer-close', 'closeEsc'); setAttr('file-viewer-close', 'title', 'closeEscTitle');
+
+  const languageSelect = document.getElementById('languageSelect');
+  if (languageSelect) {
+    languageSelect.value = currentLanguage;
+    const pt = languageSelect.querySelector('option[value="pt-BR"]');
+    const en = languageSelect.querySelector('option[value="en"]');
+    if (pt) pt.textContent = t('languagePt');
+    if (en) en.textContent = t('languageEn');
+  }
+
+  const viewer = document.getElementById('file-viewer-overlay');
+  if (viewer && viewer.classList.contains('hidden')) setText('file-viewer-title', 'file');
+  const saveIndicator = document.getElementById('saveIndicator');
+  if (saveIndicator && !saveIndicator.classList.contains('show')) saveIndicator.textContent = t('saved');
+}
+
+function setLanguage(language) {
+  if (!TRANSLATIONS[language]) return;
+  currentLanguage = language;
+  localStorage.setItem(LANGUAGE_KEY, currentLanguage);
+  applyStaticTranslations();
+  render();
+  if (!document.getElementById('calendar').classList.contains('hidden')) renderCalendar();
+}
+
+
 const NOTE_COLORS = [
   { name: 'Amarelo',
     light: { bg: '#fff8c4', border: '#e0ce6a', handle: '#ffe874', swatch: '#f0c800' },
@@ -138,7 +429,7 @@ let boards = loadBoardsList();
 
 if (!boards) {
   // Primeira vez com o sistema de quadros: migra dados antigos (quadro único) se existirem
-  boards = [{ id: 'default', name: 'Quadro 1' }];
+  boards = [{ id: 'default', name: t('defaultBoard', { n: 1 }) }];
 
   const legacy = readLegacyData();
   localStorage.setItem(
@@ -183,11 +474,11 @@ document.getElementById('boardSelect').addEventListener('change', e => {
 });
 
 document.getElementById('addBoard').addEventListener('click', () => {
-  const name = prompt('Nome do novo quadro:', `Quadro ${boards.length + 1}`);
+  const name = prompt(t('newBoardPrompt'), t('defaultBoard', { n: boards.length + 1 }));
   if (!name) return;
 
   const id = 'b' + Date.now();
-  boards.push({ id, name: name.trim() || `Quadro ${boards.length + 1}` });
+  boards.push({ id, name: name.trim() || t('defaultBoard', { n: boards.length + 1 }) });
 
   saveBoardsList();
   localStorage.setItem(boardDataKey(id), JSON.stringify({ notes: [], links: [], nextId: 1 }));
@@ -199,7 +490,7 @@ document.getElementById('renameBoard').addEventListener('click', () => {
   const board = boards.find(b => b.id === currentBoardId);
   if (!board) return;
 
-  const name = prompt('Renomear quadro:', board.name);
+  const name = prompt(t('renameBoardPrompt'), board.name);
   if (!name || !name.trim()) return;
 
   board.name = name.trim();
@@ -209,14 +500,14 @@ document.getElementById('renameBoard').addEventListener('click', () => {
 
 document.getElementById('deleteBoard').addEventListener('click', () => {
   if (boards.length <= 1) {
-    alert('Não é possível apagar o último quadro.');
+    alert(t('cannotDeleteLastBoard'));
     return;
   }
 
   const board = boards.find(b => b.id === currentBoardId);
   if (!board) return;
 
-  if (!confirm(`Apagar o quadro "${board.name}" e todas as suas notas?`)) return;
+  if (!confirm(t('confirmDeleteBoard', { name: board.name }))) return;
 
   localStorage.removeItem(boardDataKey(currentBoardId));
   boards = boards.filter(b => b.id !== currentBoardId);
@@ -243,7 +534,7 @@ function flashSaveIndicator(ok) {
   const el = document.getElementById('saveIndicator');
   if (!el) return;
 
-  el.textContent = ok ? '💾 Salvo' : '⚠ Erro ao salvar';
+  el.textContent = ok ? t('saved') : t('saveError');
   el.classList.add('show');
 
   clearTimeout(saveIndicatorTimeout);
@@ -561,12 +852,12 @@ function getFileIcon(mime, name) {
 }
 
 function openFileViewer(dataUrl, fileName, mimeType, noteRef) {
-  fileViewerTitle.textContent = fileName || 'Arquivo';
+  fileViewerTitle.textContent = fileName || t('file');
   fileViewerBody.innerHTML = '';
   fileViewerOverlay.classList.remove('hidden');
 
   if (!dataUrl) {
-    fileViewerBody.innerHTML = `<div class="viewer-placeholder"><span class="ph-icon">📎</span><p>Pré-visualização não disponível.</p></div>`;
+    fileViewerBody.innerHTML = `<div class="viewer-placeholder"><span class="ph-icon">📎</span><p>${t('previewUnavailable')}</p></div>`;
     return;
   }
 
@@ -598,17 +889,17 @@ function openFileViewer(dataUrl, fileName, mimeType, noteRef) {
 
     const saveBtn = document.createElement('button');
     saveBtn.className = 'viewer-save-btn';
-    saveBtn.textContent = '💾 Salvar alterações na nota';
+    saveBtn.textContent = t('saveChanges');
     saveBtn.disabled = true;
 
     const discardBtn = document.createElement('button');
     discardBtn.className = 'viewer-discard-btn';
-    discardBtn.textContent = 'Descartar';
+    discardBtn.textContent = t('discard');
     discardBtn.disabled = true;
 
     const hint = document.createElement('span');
     hint.className = 'viewer-edit-hint';
-    hint.textContent = 'Edite o texto acima e salve para atualizar a nota';
+    hint.textContent = t('editHint');
 
     bar.append(saveBtn, discardBtn, hint);
 
@@ -649,8 +940,8 @@ function openFileViewer(dataUrl, fileName, mimeType, noteRef) {
       originalText = newText;
       saveBtn.disabled = true;
       discardBtn.disabled = true;
-      hint.textContent = '✅ Salvo!';
-      setTimeout(() => { hint.textContent = 'Edite o texto acima e salve para atualizar a nota'; }, 2000);
+      hint.textContent = t('savedShort');
+      setTimeout(() => { hint.textContent = t('editHint'); }, 2000);
     });
 
     discardBtn.addEventListener('click', () => {
@@ -666,12 +957,12 @@ function openFileViewer(dataUrl, fileName, mimeType, noteRef) {
     // Tipo desconhecido — oferece download
     const a = document.createElement('a');
     a.href = dataUrl;
-    a.download = fileName || 'arquivo';
-    a.textContent = 'Baixar arquivo';
+    a.download = fileName || t('fileLower');
+    a.textContent = t('downloadFile');
 
     fileViewerBody.innerHTML = `<div class="viewer-placeholder">
       <span class="ph-icon">${getFileIcon(mimeType, fileName)}</span>
-      <p>Pré-visualização não disponível para este tipo de arquivo.</p>
+      <p>${t('previewUnavailableType')}</p>
     </div>`;
     fileViewerBody.querySelector('.viewer-placeholder').appendChild(a);
   }
@@ -707,8 +998,8 @@ function openUrlViewer(url) {
 function showUrlFallback(url) {
   fileViewerBody.innerHTML = `<div class="viewer-placeholder">
     <span class="ph-icon">🔗</span>
-    <p>Este site não permite ser exibido aqui.</p>
-    <a id="open-external-link">Abrir em nova aba ↗</a>
+    <p>${t('siteCannotEmbed')}</p>
+    <a id="open-external-link">${t('openNewTab')}</a>
   </div>`;
   document.getElementById('open-external-link').addEventListener('click', () => {
     window.open(url, '_blank', 'noopener');
@@ -758,7 +1049,7 @@ viewport.addEventListener('drop', e => {
 
       if (file.type.startsWith('image/')) {
         if (file.size > MAX_IMAGE_SIZE) {
-          createNote(x, y, { text: `📎 ${file.name} (imagem grande demais pra importar)` });
+          createNote(x, y, { text: t('imageTooLarge', { name: file.name }) });
           return;
         }
         const reader = new FileReader();
@@ -773,7 +1064,7 @@ viewport.addEventListener('drop', e => {
 
       } else if (file.type.startsWith('text/') || /\.(txt|md|csv|json|log)$/i.test(file.name)) {
         if (file.size > MAX_TEXT_FILE_SIZE) {
-          createNote(x, y, { text: `📎 ${file.name} (arquivo grande demais pra importar o conteúdo)` });
+          createNote(x, y, { text: t('textFileTooLarge', { name: file.name }) });
           return;
         }
         const reader = new FileReader();
@@ -794,7 +1085,7 @@ viewport.addEventListener('drop', e => {
 
       } else if (file.type === 'application/pdf') {
         if (file.size > 10 * 1024 * 1024) {
-          createNote(x, y, { text: `📄 ${file.name} (PDF grande demais pra importar)` });
+          createNote(x, y, { text: t('pdfTooLarge', { name: file.name }) });
           return;
         }
         const reader = new FileReader();
@@ -821,7 +1112,7 @@ viewport.addEventListener('drop', e => {
           createNote(x, y, {
             text: dirUrl
               ? `[📁 ${file.name}](${dirUrl})`
-              : `📁 ${file.name}\n(Arraste do Explorer para abrir)`,
+              : `📁 ${file.name}\n(${t('dragExplorerToOpen')})`,
             fileName: file.name,
             fileMime: 'inode/directory'
           });
@@ -838,7 +1129,7 @@ viewport.addEventListener('drop', e => {
     // Se for um caminho de diretório (file:// sem extensão, ou path local)
     const isDir = dropped.startsWith('file://') && !dropped.match(/\.[a-zA-Z0-9]{1,6}$/);
     if (isDir) {
-      const dirName = dropped.split('/').filter(Boolean).pop() || 'Pasta';
+      const dirName = dropped.split('/').filter(Boolean).pop() || t('folder');
       createNote(p.x - 110, p.y - 20, {
         text: `[📁 ${decodeURIComponent(dirName)}](${dropped})`,
         fileMime: 'inode/directory'
@@ -881,7 +1172,7 @@ function updateStats() {
   const el = document.getElementById('stats');
   if (!el) return;
 
-  el.textContent = `${state.notes.length} nota${state.notes.length === 1 ? '' : 's'} · ${state.links.length} ligaç${state.links.length === 1 ? 'ão' : 'ões'}`;
+  el.textContent = t('stats', { notes: state.notes.length, links: state.links.length });
 }
 
 function setActiveNote(id) {
@@ -972,24 +1263,24 @@ function renderNote(note) {
   const filePreviewHtml = note.fileData
     ? `<div class="note-file-preview" data-action="open-file">
          <span class="file-icon">${getFileIcon(note.fileMime, note.fileName)}</span>
-         <span class="file-name" title="${escapeHtml(note.fileName || 'arquivo')}">${escapeHtml(note.fileName || 'arquivo')}</span>
-         <span class="file-open-btn">👁 Ver</span>
+         <span class="file-name" title="${escapeHtml(note.fileName || t('fileLower'))}">${escapeHtml(note.fileName || t('fileLower'))}</span>
+         <span class="file-open-btn">👁 ${t('view')}</span>
        </div>`
     : '';
 
   el.innerHTML = `
     <div class="handle">
-      <button class="pin-btn" title="Fixar nota">${note.pinned ? '📌' : '📍'}</button>
-      <button class="color-btn" title="Cor da nota">🎨</button>
-      <button class="cal-btn" title="Inserir data">📅</button>
-      <button class="make-link-btn" title="Transformar texto selecionado em link">🔗 Link</button>
-      <button class="link-open-btn" title="Abrir link (Shift+clique abre no navegador)" style="display:${isUrl(note.text) ? 'inline-flex' : 'none'}">↗</button>
-      <button class="del" title="Apagar">✕</button>
+      <button class="pin-btn" title="${t(note.pinned ? 'unpinNote' : 'pinNote')}">${note.pinned ? '📌' : '📍'}</button>
+      <button class="color-btn" title="${t('noteColor')}">🎨</button>
+      <button class="cal-btn" title="${t('insertDate')}">📅</button>
+      <button class="make-link-btn" title="${t('makeLink')}">${t('linkButton')}</button>
+      <button class="link-open-btn" title="${t('openLink')}" style="display:${isUrl(note.text) ? 'inline-flex' : 'none'}">↗</button>
+      <button class="del" title="${t('deleteNote')}">✕</button>
     </div>
 
     ${filePreviewHtml}
     ${note.image ? `<img class="note-image" src="${note.image}" alt="">` : ''}
-    <textarea placeholder="Escreva algo...">${escapeHtml(note.text)}</textarea>
+    <textarea placeholder="${t('notePlaceholder')}">${escapeHtml(note.text)}</textarea>
     <div class="note-link-overlay" aria-hidden="true"></div>
   `;
 
@@ -1081,7 +1372,7 @@ function renderNote(note) {
       // Botão × para remover o link da nota
       const removeBtn = document.createElement('button');
       removeBtn.className = 'link-badge-remove';
-      removeBtn.title = 'Remover link';
+      removeBtn.title = t('removeLink');
       removeBtn.textContent = '×';
       removeBtn.addEventListener('click', e => {
         e.preventDefault();
@@ -1188,6 +1479,7 @@ function renderNote(note) {
 
     el.classList.toggle('pinned', note.pinned);
     pinBtn.textContent = note.pinned ? '📌' : '📍';
+    pinBtn.title = t(note.pinned ? 'unpinNote' : 'pinNote');
 
     save();
   });
@@ -1214,7 +1506,8 @@ function renderNote(note) {
       const sw = document.createElement('button');
       sw.className = 'color-swatch' + (i === (note.colorIndex || 0) ? ' active-swatch' : '');
       sw.style.background = isDarkNow ? c.dark.swatch : c.light.swatch;
-      sw.title = c.name || ('Cor ' + (i + 1));
+      const colorNames = t('colors');
+      sw.title = colorNames[i] || t('colorNumber', { n: i + 1 });
 
       sw.addEventListener('click', ev => {
         ev.stopPropagation();
@@ -1419,7 +1712,7 @@ function rectEdgePoint(rect, target) {
 }
 
 function promptLinkLabel(link) {
-  const value = prompt('Rótulo da ligação:', link.label || '');
+  const value = prompt(t('linkLabelPrompt'), link.label || '');
   if (value === null) return;
 
   const trimmed = value.trim();
@@ -1614,7 +1907,7 @@ linkBtn.addEventListener('click', () => {
 /* ===== LIMPAR ===== */
 
 document.getElementById('clearAll').addEventListener('click', () => {
-  if (!confirm('Apagar todas as notas deste quadro?')) return;
+  if (!confirm(t('confirmClearBoard'))) return;
 
   pushUndoSnapshot();
 
@@ -1722,15 +2015,14 @@ importInput.addEventListener('change', () => {
         const totalBoards = parsed.boards.length;
 
         const proceed = confirm(
-          `Importar ${totalBoards} quadro(s) com ${totalNotes} nota(s) no total.\n\n` +
-          `⚠️ Isso vai substituir TODOS os seus quadros atuais. Continuar?`
+          t('importAllConfirm', { boards: totalBoards, notes: totalNotes })
         );
         if (!proceed) return;
 
         // Grava cada quadro no localStorage
         const newBoards = parsed.boards.map(b => {
           const id   = b.id || ('b' + Date.now() + Math.random().toString(36).slice(2));
-          const name = b.name || 'Quadro';
+          const name = b.name || t('boardFallback');
           const data = {
             notes:  Array.isArray(b.notes)  ? b.notes  : [],
             links:  Array.isArray(b.links)  ? b.links  : [],
@@ -1752,12 +2044,12 @@ importInput.addEventListener('change', () => {
           : boards[0].id;
 
         switchBoard(target);
-        alert(`✅ ${totalBoards} quadro(s) importado(s) com sucesso!`);
+        alert(t('importSuccess', { boards: totalBoards }));
 
       // ── Formato v1 / legado: exportação de um único quadro ──
       } else if (parsed && Array.isArray(parsed.notes)) {
         const proceed = state.notes.length === 0 ||
-          confirm('Importar vai substituir as notas do quadro atual. Continuar?');
+          confirm(t('importBoardConfirm'));
         if (!proceed) return;
 
         pushUndoSnapshot();
@@ -1781,11 +2073,11 @@ importInput.addEventListener('change', () => {
         render();
 
       } else {
-        throw new Error('Formato de arquivo não reconhecido.');
+        throw new Error(t('unrecognizedFileFormat'));
       }
 
     } catch (err) {
-      alert('Não foi possível importar esse arquivo: ' + err.message);
+      alert(t('importError', { message: err.message }));
     } finally {
       importInput.value = '';
     }
@@ -1800,7 +2092,7 @@ document.getElementById('exportBoardNotes').addEventListener('click', () => {
   save();
 
   const board = boards.find(b => b.id === currentBoardId);
-  const boardName = board ? board.name : 'Quadro';
+  const boardName = board ? board.name : t('boardFallback');
 
   // Mesmo formato (v1/legado) que o Importar já sabe ler para um quadro só
   const payload = {
@@ -1852,6 +2144,7 @@ function toggleSettingsPanel() {
 
 settingsToggle.addEventListener('click', toggleSettingsPanel);
 settingsClose.addEventListener('click', closeSettings);
+document.getElementById('languageSelect').addEventListener('change', e => setLanguage(e.target.value));
 
 // Fecha ao clicar fora do painel
 document.addEventListener('mousedown', e => {
@@ -2014,7 +2307,7 @@ document.addEventListener('keydown', e => {
   if (!inField && (e.key === 'Delete' || e.key === 'Backspace')) {
     if (selectedNoteIds.size > 0) {
       e.preventDefault();
-      if (!confirm(`Apagar ${selectedNoteIds.size} nota(s) selecionada(s)?`)) return;
+      if (!confirm(t('confirmDeleteSelected', { count: selectedNoteIds.size }))) return;
       pushUndoSnapshot();
       const ids = [...selectedNoteIds];
       state.notes = state.notes.filter(n => !ids.includes(n.id));
@@ -2062,12 +2355,6 @@ const calTitle = document.getElementById('calTitle');
 const calGrid = document.getElementById('calGrid');
 const calToggle = document.getElementById('toggleCal');
 
-const MESES = [
-  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-];
-
-const DOW = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
 function openCalendar() {
   closeSettings();
@@ -2109,11 +2396,12 @@ function renderCalendar() {
   const year = calView.getFullYear();
   const month = calView.getMonth();
 
-  calTitle.textContent = `${MESES[month]} ${year}`;
+  const months = t('months');
+  calTitle.textContent = `${months[month]} ${year}`;
 
   calGrid.innerHTML = '';
 
-  DOW.forEach(d => {
+  t('dow').forEach(d => {
     const c = document.createElement('div');
     c.className = 'dow';
     c.textContent = d;
@@ -2155,7 +2443,9 @@ function insertDateIntoActiveNote(y, m, d) {
     note = createNote(c.x - 110, c.y - 70);
   }
 
-  const dateStr = `${String(d).padStart(2, '0')}/${String(m + 1).padStart(2, '0')}/${y}`;
+  const dd = String(d).padStart(2, '0');
+  const mm = String(m + 1).padStart(2, '0');
+  const dateStr = currentLanguage === 'en' ? `${mm}/${dd}/${y}` : `${dd}/${mm}/${y}`;
 
   const el = document.querySelector(`.note[data-id="${note.id}"] textarea`);
 
@@ -2335,6 +2625,7 @@ function renderBoardSelect() {
   });
 }
 
+applyStaticTranslations();
 renderBoardSelect();
 applyTransform();
 render();
